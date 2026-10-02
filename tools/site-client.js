@@ -61,11 +61,15 @@
     showResults()
     q.focus({ preventScroll: true })
   })
-  for (const link of document.querySelectorAll('a[href="#directory"]')) link.addEventListener('click', event => {
+  for (const link of document.querySelectorAll('a[href="#directory"], a[href="#about"], a[href="#method"]')) link.addEventListener('click', event => {
     event.preventDefault()
-    history.replaceState(null, '', '#directory')
-    document.getElementById('directory').scrollIntoView({ block: 'start', behavior: 'instant' })
-    q.focus({ preventScroll: true })
+    const section = document.getElementById(link.hash.slice(1))
+    history.replaceState(null, '', link.hash)
+    const top = window.scrollY + section.getBoundingClientRect().top
+    window.scrollTo({ top, behavior: 'instant' })
+    const target = section.id === 'directory' ? q : section.querySelector('h2')
+    if (target !== q) target.tabIndex = -1
+    target.focus({ preventScroll: true })
   })
   for (const button of document.querySelectorAll('#t th button')) button.addEventListener('click', () => {
     const key = button.dataset.k

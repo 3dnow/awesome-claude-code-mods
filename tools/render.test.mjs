@@ -149,6 +149,7 @@ test('catalogue keeps search usable while browsing and refining results on deskt
     await browse.focus()
     await browse.click()
     assert.equal(await search.evaluate(el => el === document.activeElement), true)
+    assert.ok(Math.abs(await page.locator('#directory').evaluate(el => el.getBoundingClientRect().top)) < 1, 'Collection navigation leaves a strip of the hero visible')
     await search.fill('Example mod')
     assert.equal(await rows.count(), 64)
 
@@ -168,18 +169,59 @@ test('catalogue keeps search usable while browsing and refining results on deskt
     assert.equal(scrolled.barVisible && scrolled.fieldVisible, true, `${width}px: search disappeared while browsing`)
     assert.ok(scrolled.width <= width, `${width}px: search bar causes horizontal overflow`)
 
-    await page.keyboard.press('End')
     await page.keyboard.type(' 1')
     assert.equal(await search.inputValue(), 'Example mod 1')
     assert.equal(await rows.count(), 11)
     assert.match(await page.locator('#n').textContent(), /11 of 64 mods/)
     assert.equal(await search.evaluate(el => el === document.activeElement), true)
-    await page.waitForFunction(() => {
+    const refined = await page.evaluate(async () => {
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
       const bar = document.querySelector('.catalog-search').getBoundingClientRect()
       const first = document.querySelector('#t tbody tr:not([hidden])').getBoundingClientRect()
-      return bar.top >= 0 && first.top >= bar.bottom - 1 && first.top < innerHeight
+      return { barTop: bar.top, barBottom: bar.bottom, firstTop: first.top, viewport: innerHeight }
     })
+    assert.ok(refined.barTop >= 0 && refined.firstTop >= refined.barBottom - 1 && refined.firstTop < refined.viewport,
+      `${width}px: refined results shifted out of view after layout: ${JSON.stringify(refined)}`)
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+  }
+})
+
+test('section links align their destinations and focus the selected section', async t => {
+  const dir = fixture(t, Array.from({ length: 12 }, (_, i) => mod(i)))
+  render(dir)
+  const browser = await chromium.launch()
+  t.after(() => browser.close())
+  const page = await browser.newPage()
+  await page.route('https://**/*', route => route.abort())
+
+  for (const { width, height, colorScheme } of [
+    { width: 390, height: 844, colorScheme: 'light' },
+    { width: 1440, height: 844, colorScheme: 'light' },
+    { width: 2048, height: 1144, colorScheme: 'light' },
+    { width: 2048, height: 1144, colorScheme: 'dark' },
+  ]) {
+    await page.setViewportSize({ width, height })
+    await page.emulateMedia({ colorScheme })
+    await page.goto(pathToFileURL(join(dir, 'docs/index.html')).href)
+    const aboutLink = page.locator('nav a[href="#about"]')
+    if (await aboutLink.isVisible()) {
+      await aboutLink.click()
+      assert.equal(new URL(page.url()).hash, '#about')
+      assert.ok(Math.abs(await page.locator('#about').evaluate(el => el.getBoundingClientRect().top)) < 1,
+        `${width}×${height} ${colorScheme}: About navigation leaves a strip of the collection visible`)
+      assert.equal(await page.locator('#about h2').evaluate(el => el === document.activeElement), true)
+    }
+
+    await page.locator('.filter-heading a[href="#method"]').click()
+    assert.equal(new URL(page.url()).hash, '#method')
+    assert.equal(await page.locator('#method h2').evaluate(el => el === document.activeElement), true)
+    const position = await page.locator('#method').evaluate(el => {
+      const top = el.getBoundingClientRect().top
+      const remaining = document.documentElement.scrollHeight - innerHeight - scrollY
+      return { top, remaining }
+    })
+    assert.ok(Math.abs(position.top) < 1 || (position.top >= 0 && Math.abs(position.remaining) < 1),
+      `${width}px: access details should reach the viewport top or the end of the document`)
   }
 })
 

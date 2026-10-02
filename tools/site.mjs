@@ -39,12 +39,13 @@ export function renderSite(data) {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Awesome Claude Code Mods | Make Claude Code your own</title>
-<meta name="description" content="${esc(description)}"><meta name="theme-color" content="#e5eddf" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#1b281c" media="(prefers-color-scheme: dark)">
+<meta name="description" content="${esc(description)}"><meta name="theme-color" content="#f3f3ee" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111113" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="https://mods.aidojo.si/"><link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website"><meta property="og:title" content="Awesome Claude Code Mods"><meta property="og:description" content="${esc(description)}"><meta property="og:url" content="https://mods.aidojo.si/">
 <meta property="og:image" content="https://mods.aidojo.si/social-preview.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Awesome Claude Code Mods. Make Claude Code your own.">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="./fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="./fonts/source-serif-4-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>${css}</style></head><body>
 <a class="skip" href="#directory">Skip to the mod directory</a>
 <div class="mast"><header class="shell"><a href="./" class="brand" aria-label="Claude Mods home">${mark}<span>claude<span class="brand-light">mods</span></span></a><nav aria-label="Main navigation"><a href="#directory">The collection</a><a href="#about">About mods</a><a class="github-link" href="${repo}">GitHub ${arrow}</a></nav></header>
@@ -59,12 +60,12 @@ export function renderSite(data) {
 <div id="empty" class="empty" hidden><h3>No mods found.</h3><p>Try a broader search or clear the access filter.</p><button type="button" data-reset>Show all mods ${arrow}</button></div>
 <div class="directory-end"><p>Stars belong to the hosting repository, not the individual mod. Recorded with this scan.</p><a href="#directory">Back to search ${arrow}</a></div>
 </section>
-<section class="about" id="about"><div class="shell about-grid"><h2>Your session.<br>A few new tricks.</h2><div><p>Mods are Claude Code plugins that run JavaScript or TypeScript hooks inside your session. They can add a dashboard, open a pane, change tool behavior, or bring context into the conversation.</p><p>Mods are on by default in Claude Code 2.1.287 and later. Choose a mod, open its repository, and follow the author’s setup instructions. The API can change between releases.</p><a class="text-link" href="${repo}#use-mods">How to use mods ${arrow}</a><a class="text-link" href="https://claude.dev/blog/getting-started-with-claude-code-mods/">Build your first mod ${arrow}</a></div></div></section>
+<div class="info"><section class="about" id="about"><div class="shell about-grid"><h2>Your session.<br>A few new tricks.</h2><div><p>Mods are Claude Code plugins that run JavaScript or TypeScript hooks inside your session. They can add a dashboard, open a pane, change tool behavior, or bring context into the conversation.</p><p>Mods are on by default in Claude Code 2.1.287 and later. Choose a mod, open its repository, and follow the author’s setup instructions. The API can change between releases.</p><a class="text-link" href="${repo}#use-mods">How to use mods ${arrow}</a><a class="text-link" href="https://claude.dev/blog/getting-started-with-claude-code-mods/">Build your first mod ${arrow}</a></div></div></section>
 <section class="method shell" id="method" aria-labelledby="method-title"><div class="section-heading"><div><h2 id="method-title">A closer look at access.</h2><p>One mark for every mod in the scan. Select a mark to find its entry.</p></div><a href="./mods.json">Download the data ${arrow}</a></div><div class="strip" role="group" aria-label="Mods coloured by access level, draws only through network">${strip}</div><div class="strip-labels"><span>Draws & remembers</span><span>Reads</span><span>Writes or runs</span><span>Network</span></div>
 <div class="method-copy"><p>Each entry records the hooks and API calls reported by <code>claude plugin validate</code>. Access levels describe the widest reach of those calls. They are not safety ratings.</p><p>Validation is a static check, not a runtime compatibility test. A passing result does not prove that a mod works or is safe. Check the source and its setup instructions before installing.</p></div>
 <p class="scan-note">This scan used Claude Code ${esc(data.claudeVersion)} on ${dateLabel}. <a href="${repo}#how-the-scan-works">Read the method</a>.${catalogs.length ? ` Repackaged catalogs are excluded from the mod count: ${catalogs.map(name => `<a href="https://github.com/${esc(name)}">${esc(name)}</a>`).join(', ')}.` : ''}</p>
 ${builtins.length ? `<details class="builtins"><summary>Also built into Claude Code <span>${builtins.length} mods</span></summary><p>These ship inside the binary. sec-default seats outermost only on managed machines and Team or Enterprise plans.</p><table><caption class="sr-only">Built-in Claude Code mods</caption>${heading(false)}<tbody>${builtins.map(row).join('\n')}</tbody></table></details>` : ''}
-</section></main>
+</section></div></main>
 <footer class="shell"><a href="./" class="brand">${mark}<span>claude<span class="brand-light">mods</span></span></a><p>A community collection.<br>Not affiliated with Anthropic.</p><a href="${repo}">Explore on GitHub ${arrow}</a></footer>
 <script>${script}</script></body></html>`.replace(/[ \t]+\n/g, '\n') + '\n'
 }

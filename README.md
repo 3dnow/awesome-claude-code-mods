@@ -491,7 +491,7 @@ Daily scans retain missing plugins with their last known footprint and mark them
 
 Pull-request checks combine committed candidates with submitted seeds without running global discovery. Newly added seeds must clone successfully and contain mod plugins that pass validation, with warnings allowed.
 
-Validation is a static check, not a runtime compatibility test. A passing result does not prove that UI rewrites or other hooks work in a live session. Reserved-name failures reported by the validator appear as failures in the table and badges; their reasons are recorded in the raw data and the website’s “Access & validation details” details. An incomplete or unrecognized validation result is marked “not verified”. See the [compatibility report](https://github.com/karanb192/awesome-claude-code-mods/issues/21) for the reported naming and UI rewrite changes in 2.1.287.
+Validation is a static check, not a runtime compatibility test. A passing result does not prove that UI rewrites or other hooks work in a live session. Reserved-name failures reported by the validator appear as failures in the table and badges; their reasons are recorded in the raw data and each website entry’s “Access & validation details” section. An incomplete or unrecognized validation result is marked “not verified”. See the [compatibility report](https://github.com/karanb192/awesome-claude-code-mods/issues/21) for the reported naming and UI rewrite changes in 2.1.287.
 
 Benchmark directories and plugins that identify themselves as fixtures or non-installable harnesses are recorded but excluded from the mod count, tables and badges. The workflow tests classification and renders sample lists of up to 1000 mods in Chromium at desktop and mobile widths before scanning.
 
