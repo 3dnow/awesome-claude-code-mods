@@ -117,8 +117,8 @@ h1{font-size:2rem;line-height:1.15;font-weight:600;letter-spacing:-0.01em;margin
 h2{font-size:1.15rem;font-weight:600;margin:56px 0 12px}
 p{max-width:66ch;margin:0 0 12px}
 .lead{color:var(--muted);margin-bottom:28px}
-.strip{display:flex;flex-wrap:wrap;gap:2px;min-height:56px;margin:0 0 10px}
-.seg{flex:1 0 4px;min-height:16px;display:block;border-radius:2px;text-decoration:none}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(4px,1fr));gap:2px;min-height:56px;margin:0 0 10px}
+.seg{min-height:16px;display:block;border-radius:2px;text-decoration:none}
 .seg:hover,.seg:focus-visible{outline:2px solid var(--ink);outline-offset:1px;z-index:1}
 .l0{background:var(--l0)}.l1{background:var(--l1)}.l2{background:var(--l2)}.l3{background:var(--l3)}
 .legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:0 0 20px}

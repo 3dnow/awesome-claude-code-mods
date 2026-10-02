@@ -69,11 +69,13 @@ test('scoreboard stays within desktop and mobile viewports as the scan grows', a
         const segments = [...document.querySelectorAll('.seg')].map(el => el.getBoundingClientRect())
         return {
           document: document.documentElement.scrollWidth,
+          equalWidths: Math.max(...segments.map(r => r.width)) - Math.min(...segments.map(r => r.width)) < 1,
           contained: segments.every(r => r.left >= strip.left - 1 && r.right <= strip.right + 1 && r.top >= strip.top - 1 && r.bottom <= strip.bottom + 1 && r.width >= 3 && r.height >= 16),
         }
       })
       assert.ok(sizes.document <= width, `${count} mods at ${width}px: document is ${sizes.document}px`)
       assert.ok(sizes.contained, `${count} mods at ${width}px: reach segments escape their strip`)
+      assert.ok(sizes.equalWidths, `${count} mods at ${width}px: segments have unequal widths`)
     }
     await page.locator('.lv[data-level="3"]').click()
     assert.equal(await page.locator('#t tbody tr:visible').count(), Math.floor(count / 4))

@@ -148,6 +148,7 @@ test('benchmark fixtures stay out without excluding usable evaluation mods', () 
   assert.equal(kindOf('a/b', 'plugins/benchmark-dashboard', { description: 'Displays benchmark results in a pane.' }), 'mod')
   assert.equal(kindOf('a/b', 'eval/assistant', { description: 'Evaluates the current session.' }), 'mod')
   assert.equal(kindOf('a/b', '.', { description: 'Uses a local harness daemon.' }), 'mod')
+  assert.equal(kindOf('a/b', '.', { description: 'A session dashboard, not a plugin manager.' }), 'mod')
 })
 
 test('reserved-name failures retain the validator reason', () => {
