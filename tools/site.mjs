@@ -34,8 +34,7 @@ export function renderSite(data) {
     ${mod.surfaceModules.length ? `<dt>Surface modules</dt><dd><code>${esc(mod.surfaceModules.join(', '))}</code></dd>` : ''}
     <dt>Validation on ${esc(data.claudeVersion)}</dt><dd>${esc(status(mod))}</dd>
     ${mod.validate.errors.length ? `<dt>Validator output</dt><dd>${esc(mod.validate.errors.join('; '))}</dd>` : ''}
-    ${compatibilityDetail(mod)}
-    </dl></details>`
+    ${compatibilityDetail(mod)}</dl></details>`
   const track = mod => `<span class="track" aria-label="Reach level ${mod.reach.level}: ${levels[mod.reach.level]}">${[0, 1, 2, 3].map(i => `<i class="${i <= mod.reach.level ? 'on l' + mod.reach.level : ''}"></i>`).join('')}</span>`
   const row = mod => `<tr id="${esc(slug(mod))}" data-level="${mod.reach.level}" data-name="${esc(mod.name)} ${esc(mod.repo)} ${esc(mod.description)}" data-stars="${mod.stars ?? -1}">
     <td class="identity"><a class="mod-name" href="${url(mod.url)}">${esc(mod.name)}${arrow}</a><span class="repo">${esc(mod.repo)}</span></td>
@@ -68,6 +67,7 @@ export function renderSite(data) {
 <table id="t"><caption class="sr-only">Claude Code community mods. Sort by mod name, access level or hosting repository stars.</caption>${heading(true)}<tbody>${mods.map(row).join('\n')}</tbody></table>
 <div id="empty" class="empty" hidden><h3>No mods found.</h3><p>Try a broader search or clear the access filter.</p><button type="button" data-reset>Show all mods ${arrow}</button></div>
 <div class="directory-end"><p>Stars belong to the hosting repository, not the individual mod. Recorded with this scan.</p><a href="#directory">Back to search ${arrow}</a></div>
+<div class="star-nudge" id="star-nudge"${mods.length ? '' : ' hidden'}><p>If you found a useful mod, star the list so you can find it again.</p><a href="${repo}" aria-label="Star the Claude Code mods list on GitHub"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 2.8 5.7 6.3.9-4.5 4.4 1.1 6.2-5.7-3-5.7 3 1.1-6.2L2.9 9.6l6.3-.9Z"/></svg>Star on GitHub</a></div>
 </section>
 <div class="info"><section class="about" id="about"><div class="shell about-grid"><h2>Your session.<br>A few new tricks.</h2><div><p>Mods are Claude Code plugins that run JavaScript or TypeScript hooks inside your session. They can add a dashboard, open a pane, change tool behavior, or bring context into the conversation.</p><p>Mods are on by default in Claude Code 2.1.287 and later. Choose a mod, open its repository, and follow the author’s setup instructions. The API can change between releases.</p><a class="text-link" href="${repo}#use-mods">How to use mods ${arrow}</a><a class="text-link" href="https://claude.dev/blog/getting-started-with-claude-code-mods/">Build your first mod ${arrow}</a></div></div></section>
 <section class="method shell" id="method" aria-labelledby="method-title"><div class="section-heading"><div><h2 id="method-title">A closer look at access.</h2><p>One mark per mod, colored by its widest recorded access. Select a mark to find its entry.</p></div><a href="./mods.json">Download the data ${arrow}</a></div><div class="strip" role="group" aria-label="Mods coloured by access level, draws only through network">${strip}</div><ul class="strip-legend" aria-label="Access color legend">${levels.map((label, level) => { const count = mods.filter(mod => mod.reach.level === level).length; return `<li><i class="l${level}" aria-hidden="true"></i><span>${esc(label)}</span><span class="legend-count">${count} ${count === 1 ? 'mod' : 'mods'}</span></li>` }).join('')}</ul>
