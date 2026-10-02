@@ -3,7 +3,7 @@
 // per mod under badges/ and docs/badges/, and the standalone scoreboard page under docs/,
 // which GitHub Pages serves at https://mods.karanbansal.in/.
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs'
 import { LEVEL_NAMES } from './grade.mjs'
 
 const data = JSON.parse(readFileSync('data/mods.json', 'utf8'))
@@ -22,6 +22,8 @@ const short = (s, n = 110) => { s = String(s ?? '').replace(/\s+/g, ' ').replace
 
 const LEVEL_COLORS = ['#2da44e', '#bf8700', '#e36209', '#8250df']
 const reachText = m => m.reach.labels.length ? m.reach.labels.join(', ') : 'draws only'
+const validates = m => ['passed', 'warnings'].includes(m.validate.status)
+const validationText = m => validates(m) ? data.claudeVersion : m.validate.status === 'failed' ? `fails on ${data.claudeVersion}` : 'not verified'
 
 function badge(label, value, color) {
   const w = s => Math.round(s.length * 6.4 + 12)
@@ -38,11 +40,16 @@ function badge(label, value, color) {
 // set served from the Pages domain.
 const BADGE_DIRS = ['badges', 'docs/badges']
 for (const dir of BADGE_DIRS) mkdirSync(dir, { recursive: true })
+const expectedBadges = new Set([...mods, ...builtins].flatMap(m => [`${slug(m)}-reach.svg`, `${slug(m)}-validates.svg`]))
+for (const dir of BADGE_DIRS) {
+  for (const file of readdirSync(dir)) {
+    if (/-(reach|validates)\.svg$/.test(file) && !expectedBadges.has(file)) unlinkSync(`${dir}/${file}`)
+  }
+}
 const writeBadge = (file, svg) => { for (const dir of BADGE_DIRS) writeFileSync(`${dir}/${file}`, svg) }
 for (const m of [...mods, ...builtins]) {
   writeBadge(`${slug(m)}-reach.svg`, badge('reach', `L${m.reach.level} ${reachText(m)}`, LEVEL_COLORS[m.reach.level]))
-  const ok = m.validate.status !== 'failed'
-  writeBadge(`${slug(m)}-validates.svg`, badge('validates on', ok ? data.claudeVersion : `fails on ${data.claudeVersion}`, ok ? '#2da44e' : '#d1242f'))
+  writeBadge(`${slug(m)}-validates.svg`, badge('validates on', validationText(m), validates(m) ? '#2da44e' : '#d1242f'))
 }
 
 const count = pred => mods.filter(pred).length
@@ -54,7 +61,7 @@ const stats = `As of ${asOf}, scanned against Claude Code ${data.claudeVersion}:
   + `Reach levels: ${[0, 1, 2, 3].map(l => `L${l} ${LEVEL_NAMES[l]}: ${count(m => m.reach.level === l)}`).join(' · ')}.`
   + (catalogs.length ? ` Not counted: ${catalogs.map(c => `[${c.repo}](https://github.com/${c.repo}) repackages ${c.n} mods`).join(', ')}, a catalogue named here once instead of once per copy.` : '')
 
-const row = m => [`[${cell(m.name)}](${manifestUrl(m)})`, cell(short(m.description)), `![reach](badges/${slug(m)}-reach.svg)`, cell(m.sees.join(', ') || 'only what it hooks'), m.validate.status === 'failed' ? 'fails' : data.claudeVersion, String(m.stars ?? '?')]
+const row = m => [`[${cell(m.name)}](${manifestUrl(m)})`, cell(short(m.description)), `![reach](badges/${slug(m)}-reach.svg)`, cell(m.sees.join(', ') || 'only what it hooks'), validationText(m), String(m.stars ?? '?')]
 // awesome-lint wants aligned pipes and padded cells, so every column is padded to its widest cell.
 function table(rows) {
   const head = ['Mod', 'What it does', 'Reach', 'Sees', 'Validates on', 'Stars']
@@ -86,7 +93,7 @@ const trow = m => `<tr id="${esc(slug(m))}" data-level="${m.reach.level}" data-n
 <td>${esc(short(m.description, 150))}${detail(m)}</td>
 <td class="reach">${track(m)}<span class="labels">${esc(reachText(m))}</span></td>
 <td class="sees">${esc(m.sees.join(', ') || 'only what it hooks')}</td>
-<td class="ver ${m.validate.status === 'failed' ? 'bad' : ''}"><code>${m.validate.status === 'failed' ? 'fails on ' + esc(data.claudeVersion) : esc(data.claudeVersion)}</code></td>
+<td class="ver ${validates(m) ? '' : 'bad'}"><code>${esc(validationText(m))}</code></td>
 <td class="num">${m.stars ?? ''}</td></tr>`
 const byDepth = [...mods].sort((a, b) => b.reach.level - a.reach.level || (b.stars ?? -1) - (a.stars ?? -1))
 const strip = byDepth.map(m => `<a class="seg l${m.reach.level}" href="#${esc(slug(m))}" title="${esc(m.name)}: L${m.reach.level} ${esc(reachText(m))}" data-level="${m.reach.level}"></a>`).join('')
@@ -110,8 +117,8 @@ h1{font-size:2rem;line-height:1.15;font-weight:600;letter-spacing:-0.01em;margin
 h2{font-size:1.15rem;font-weight:600;margin:56px 0 12px}
 p{max-width:66ch;margin:0 0 12px}
 .lead{color:var(--muted);margin-bottom:28px}
-.strip{display:flex;gap:2px;height:56px;margin:0 0 10px}
-.seg{flex:1 1 0;min-width:4px;display:block;border-radius:2px;text-decoration:none}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(4px,1fr));gap:2px;min-height:56px;margin:0 0 10px}
+.seg{min-height:16px;display:block;border-radius:2px;text-decoration:none}
 .seg:hover,.seg:focus-visible{outline:2px solid var(--ink);outline-offset:1px;z-index:1}
 .l0{background:var(--l0)}.l1{background:var(--l1)}.l2{background:var(--l2)}.l3{background:var(--l3)}
 .legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:0 0 20px}
@@ -143,10 +150,11 @@ dl{margin:6px 0 0}dt{font-weight:500;margin-top:4px}dd{margin:0}dd code{color:va
 tr:target td{background:#fbf6e3}
 .quiet table{color:var(--muted)}
 footer{margin-top:64px;color:var(--muted);font-size:13px;max-width:66ch}
-@media (max-width:720px){body{padding:24px 16px 60px}h1{font-size:1.5rem}.sees,th.sees,.ver,th.ver{display:none}.strip{height:40px}.reach{min-width:150px}}
+@media (max-width:720px){body{padding:24px 16px 60px}h1{font-size:1.5rem}.sees,th.sees,.ver,th.ver{display:none}.strip{min-height:40px}.reach{min-width:150px}}
 </style></head><body>
 <h1>${mods.length} Claude Code mods on GitHub, and how far each one reaches into your machine</h1>
 <p class="lead">Read straight off Claude Code's own plugin validator, which lists a mod's hooks and <code>$</code> calls before any of its code runs. Scanned against Claude Code ${esc(data.claudeVersion)} on ${asOf}, rescanned nightly. Source, method and the curated list: <a href="https://github.com/karanb192/awesome-claude-code-mods">awesome-claude-code-mods</a>.</p>
+<p>Validation is a static check, not a runtime compatibility test. A passing result does not prove UI rewrites or other hooks work in a live session. Failed rows retain the validator's reason under “hooks and calls”.</p>
 <div class="strip" role="img" aria-label="One segment per mod, coloured by reach level, deepest first">${strip}</div>
 <div class="legend" role="group" aria-label="Filter by reach level">${legend}</div>
 ${catalogs.length ? `<p>Not counted: ${catalogs.map(c => `<a href="https://github.com/${c.repo}">${esc(c.repo)}</a> repackages ${c.n} mods`).join(', ')}, a catalogue named here once instead of once per copy.</p>` : ''}

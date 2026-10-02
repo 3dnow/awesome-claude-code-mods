@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test tools/parse.test.mjs",
+    "test:render": "node --test tools/render.test.mjs",
     "lint": "awesome-lint",
     "discover": "node tools/discover.mjs",
     "scan": "node tools/scan.mjs",
@@ -13,7 +14,8 @@
     "refresh": "npm run discover && npm run scan && npm run render"
   },
   "devDependencies": {
-    "awesome-lint": "^2.3.0"
+    "awesome-lint": "^2.3.0",
+    "playwright": "^1.63.0"
   },
   "engines": {
     "node": ">=22"

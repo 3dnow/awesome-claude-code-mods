@@ -42,6 +42,8 @@ The footprint is whatever `claude plugin validate` printed for your plugin on th
 
 ```sh
 npm test            # parser and grader tests
+npx playwright install chromium  # once, for browser checks
+npm run test:render  # generated statuses, badges and responsive layout
 npm run lint        # awesome-lint on README.md
 npm run discover    # refresh data/repos.txt (needs gh logged in)
 npm run scan        # clone, validate, write data/mods.json (needs the claude CLI)

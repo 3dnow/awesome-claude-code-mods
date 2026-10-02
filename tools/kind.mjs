@@ -5,7 +5,7 @@
 
 import { readFileSync } from 'node:fs'
 
-const NOT_A_MOD = [/\/tests?\//, /\/fixtures?\//, /\/probes?\//, /\/examples?\//, /\/upstreams?\//, /\/docs?\//, /\/templates?\//, /\/canary\//]
+const NOT_A_MOD = [/\/tests?\//, /\/fixtures?\//, /\/probes?\//, /\/examples?\//, /\/upstreams?\//, /\/docs?\//, /\/templates?\//, /\/canary\//, /\/bench(?:marks?)?\//]
 
 export function readCatalogs(path = 'data/catalogs.txt') {
   let text; try { text = readFileSync(path, 'utf8') } catch { return new Set() }
@@ -15,7 +15,7 @@ export function readCatalogs(path = 'data/catalogs.txt') {
 export function kindOf(repo, rel, manifest, catalogs = new Set()) {
   if (repo === 'anthropics/claude-code') return 'builtin'
   if (NOT_A_MOD.some(re => re.test('/' + rel + '/'))) return 'fixture'
-  if (/not a product mod|measurement instrument|test fixture/i.test(manifest?.description ?? '')) return 'fixture'
+  if (/not a product mod|not a plugin to install|not an? installable plugin|measurement instrument|test fixture/i.test(manifest?.description ?? '')) return 'fixture'
   if (catalogs.has(repo)) return 'catalog'
   if (/\/mods\/(diff|sec-default|telemetry)$/.test('/' + rel) || ['diff', 'sec-default', 'telemetry'].includes(manifest?.name) && rel.includes('mods/')) return 'mirror'
   return 'mod'
