@@ -8,6 +8,7 @@ const slug = mod => `${mod.repo.replace('/', '--')}--${mod.name}`.replace(/[^A-Z
 const url = value => /^https?:\/\//i.test(String(value)) ? esc(value) : '#directory'
 const arrow = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg>'
 const mark = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M11 5H5v22h6M21 5h6v22h-6M16 10v12M10 16h12"/></svg>'
+const star = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 2.8 5.7 6.3.9-4.5 4.4 1.1 6.2-5.7-3-5.7 3 1.1-6.2L2.9 9.6l6.3-.9Z"/></svg>'
 const levels = ['Draws & remembers', 'Reads files', 'Writes or runs', 'Uses the network']
 const hookText = hook => hook.event + (Object.keys(hook.matcher).length ? ' {' + Object.entries(hook.matcher).map(([k, v]) => `${k}=${v}`).join(', ') + '}' : '')
 const sourceUrl = (mod, file, line) => `https://github.com/${mod.repo}/blob/${mod.sourceCommit ?? mod.defaultBranch ?? 'main'}/${file.split('/').map(encodeURIComponent).join('/')}${line ? '#L' + line : ''}`
@@ -34,8 +35,7 @@ export function renderSite(data) {
     ${mod.surfaceModules.length ? `<dt>Surface modules</dt><dd><code>${esc(mod.surfaceModules.join(', '))}</code></dd>` : ''}
     <dt>Validation on ${esc(data.claudeVersion)}</dt><dd>${esc(status(mod))}</dd>
     ${mod.validate.errors.length ? `<dt>Validator output</dt><dd>${esc(mod.validate.errors.join('; '))}</dd>` : ''}
-    ${compatibilityDetail(mod)}
-    </dl></details>`
+    ${compatibilityDetail(mod)}</dl></details>`
   const track = mod => `<span class="track" aria-label="Reach level ${mod.reach.level}: ${levels[mod.reach.level]}">${[0, 1, 2, 3].map(i => `<i class="${i <= mod.reach.level ? 'on l' + mod.reach.level : ''}"></i>`).join('')}</span>`
   const row = mod => `<tr id="${esc(slug(mod))}" data-level="${mod.reach.level}" data-name="${esc(mod.name)} ${esc(mod.repo)} ${esc(mod.description)}" data-stars="${mod.stars ?? -1}">
     <td class="identity"><a class="mod-name" href="${url(mod.url)}">${esc(mod.name)}${arrow}</a><span class="repo">${esc(mod.repo)}</span></td>
@@ -57,7 +57,7 @@ export function renderSite(data) {
 <link rel="preload" href="./fonts/source-serif-4-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>${css}</style></head><body>
 <a class="skip" href="#directory">Skip to the mod directory</a>
-<div class="mast"><header class="shell"><a href="./" class="brand" aria-label="Claude Mods home">${mark}<span>claude<span class="brand-light">mods</span></span></a><nav aria-label="Main navigation"><a href="#directory">The collection</a><a href="#about">About mods</a><a class="github-link" href="${repo}">GitHub ${arrow}</a></nav></header>
+<div class="mast"><header class="shell"><a href="./" class="brand" aria-label="Claude Mods home">${mark}<span>claude<span class="brand-light">mods</span></span></a><nav aria-label="Main navigation"><a href="#directory">The collection</a><a href="#about">About mods</a><a class="github-link" href="${repo}" aria-label="Star the Claude Code mods list on GitHub">${star}Star on GitHub</a></nav></header>
 </div><main><div class="mast"><section class="hero shell" aria-labelledby="title"><div class="hero-intro"><h1 id="title">Make Claude Code<br><span>your own.</span></h1><p>Little additions to the way you code.<br> Discover community-built mods for your terminal, your workflow, and everything in between.</p></div>
 </section></div>
 <section class="directory shell" id="directory" aria-labelledby="directory-title"><div class="section-heading"><div><h2 id="directory-title">The collection<span class="total">${mods.length}</span></h2><p>Find something useful. See what it can access.</p></div><a href="${repo}/blob/main/contributing.md">Submit a mod ${arrow}</a></div>
