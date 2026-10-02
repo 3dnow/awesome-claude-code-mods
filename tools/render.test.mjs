@@ -53,7 +53,7 @@ test('render preserves failures, distinguishes unknown results and removes exclu
   }
 })
 
-test('compatibility warnings stay distinct from validation failures and link to scanned source', t => {
+test('compatibility warnings stay distinct from validation failures and link to scanned source', async t => {
   const reviewed = {
     ...mod(0), sourceCommit: 'a'.repeat(40),
     marketplaces: [{ path: '.claude-plugin/marketplace.json', name: '<market>', status: 'failed', errors: ['name: reserved <name>'] }],
@@ -71,6 +71,24 @@ test('compatibility warnings stay distinct from validation failures and link to 
   assert.match(page, new RegExp(`blob/${'a'.repeat(40)}/plugins/mod-0/hooks/colour.ts#L12`))
   assert.match(page, /does not prove those strings reach a text rewrite/)
   assert.match(readFileSync(join(dir, 'badges/example--mods--mod-0-validates.svg'), 'utf8'), /#bf8700/)
+  const browser = await chromium.launch()
+  t.after(() => browser.close())
+  const tab = await browser.newPage()
+  await tab.route('https://**/*', route => route.abort())
+  await tab.goto(pathToFileURL(join(dir, 'docs/index.html')).href)
+  const row = tab.locator('#example--mods--mod-0')
+  for (const width of [390, 1440]) {
+    await tab.setViewportSize({ width, height: 900 })
+    assert.equal(await row.locator('.compatibility').isVisible(), true)
+    assert.match(await row.locator('.compatibility').innerText(), /marketplace fails; review UI rewrite/)
+    assert.equal(await row.locator('.bad').count(), 0)
+  }
+  await row.locator('summary').click()
+  const source = row.getByRole('link', { name: 'plugins/mod-0/hooks/colour.ts:12' })
+  assert.equal(await source.isVisible(), true)
+  assert.equal(await source.getAttribute('href'), `https://github.com/example/mods/blob/${'a'.repeat(40)}/plugins/mod-0/hooks/colour.ts#L12`)
+  assert.match(await row.locator('dl').innerText(), /Marketplace failed/)
+  assert.match(await row.locator('dl').innerText(), /Validation on 2.1.287\nPassed/)
 })
 
 test('scoreboard stays within desktop and mobile viewports as the scan grows', async t => {
