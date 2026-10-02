@@ -5,7 +5,8 @@
   const rows = [...tbody.rows]
   const filters = [...document.querySelectorAll('.lv')]
   const reset = document.getElementById('reset')
-  const results = document.getElementById('search-results')
+  const searchPanel = document.querySelector('.catalog-search')
+  const table = document.getElementById('t')
   const clearSearch = document.getElementById('clear-search')
   let level = ''
 
@@ -19,9 +20,7 @@
     count.textContent = visible === rows.length ? `${rows.length} mods` : `${visible} of ${rows.length} mods`
     for (const filter of filters) filter.setAttribute('aria-pressed', String(filter.dataset.level === level))
     reset.hidden = !search && !level
-    results.hidden = !search
     clearSearch.hidden = q.value.length === 0
-    results.firstChild.textContent = `View ${visible} matching ${visible === 1 ? 'mod' : 'mods'} `
     document.getElementById('empty').hidden = visible !== 0
   }
 
@@ -31,24 +30,42 @@
     apply()
   }
 
+  function showResults() {
+    const top = window.scrollY + table.getBoundingClientRect().top - searchPanel.offsetHeight - 12
+    window.scrollTo({ top, behavior: 'instant' })
+  }
+
+  function updateResults() {
+    const readingRows = table.getBoundingClientRect().top < searchPanel.getBoundingClientRect().bottom
+    apply()
+    if (readingRows) showResults()
+  }
+
   for (const filter of filters) filter.addEventListener('click', () => {
     level = level === filter.dataset.level ? '' : filter.dataset.level
-    apply()
+    updateResults()
   })
   for (const button of document.querySelectorAll('#reset, [data-reset]')) button.addEventListener('click', () => {
     clear()
-    document.querySelector('.lv.all').focus({ preventScroll: true })
+    showResults()
+    q.focus({ preventScroll: true })
   })
-  q.addEventListener('input', apply)
+  q.addEventListener('input', updateResults)
   clearSearch.addEventListener('click', () => {
     q.value = ''
-    apply()
-    q.focus()
+    updateResults()
+    q.focus({ preventScroll: true })
   })
   document.querySelector('.search').addEventListener('submit', event => {
     event.preventDefault()
-    document.getElementById('directory').scrollIntoView()
-    document.querySelector('.lv.all').focus({ preventScroll: true })
+    showResults()
+    q.focus({ preventScroll: true })
+  })
+  for (const link of document.querySelectorAll('a[href="#directory"]')) link.addEventListener('click', event => {
+    event.preventDefault()
+    history.replaceState(null, '', '#directory')
+    document.getElementById('directory').scrollIntoView({ block: 'start', behavior: 'instant' })
+    q.focus({ preventScroll: true })
   })
   for (const button of document.querySelectorAll('#t th button')) button.addEventListener('click', () => {
     const key = button.dataset.k

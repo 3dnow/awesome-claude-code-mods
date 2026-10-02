@@ -60,7 +60,7 @@ node tools/changed.mjs   # exit 0 if the scan differs from HEAD on anything but 
 
 The landing page is generated from `data/mods.json`. Edit `tools/site.mjs`, `tools/site.css` or `tools/site-client.js`, then run `npm run render`. Do not edit `docs/index.html` directly.
 
-The featured entries are keyed by repository and mod name. They appear only while the mod is present in the scan. Search, filtering and sorting run in the browser; the full collection remains readable without JavaScript.
+Search, filtering and sorting run in the browser; the full collection remains readable without JavaScript. Search stays above the results while browsing. The page follows the system's light or dark appearance through `prefers-color-scheme`.
 
 Run `npm run test:render` to check the generated page and its browser interactions. Preview the `docs/` folder with a local static server. GitHub Pages serves this folder, with the domain in `docs/CNAME`.
 

@@ -4,7 +4,7 @@
 
 A Claude Mod is a Claude Code plugin whose hooks are JavaScript or TypeScript functions that run inside your session. They can draw above the prompt, open panes beside the transcript, rewrite tool calls, spawn agents and access the host through the mods API. Mods are on by default in Claude Code **2.1.287 or later**. The API can change between releases; the official guide and original design thread are listed under Building mods below.
 
-**[Browse the mod collection](https://mods.aidojo.si/)** to search by name or use case, explore a few starting points, and inspect each mod's access details.
+**[Browse the mod collection](https://mods.aidojo.si/)** to search by name or use case and inspect each mod's access details.
 
 This list is different from a plain index in one way. Every row carries the mod's **footprint**: the events it hooks and the `$` calls it makes, printed by Claude's own `claude plugin validate` before any mod code runs. A nightly scan clones every candidate repo on GitHub and refreshes the table, the badges and the website, which is generated from the same data. The method is described below the tables.
 
