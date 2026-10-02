@@ -4,39 +4,28 @@
 // Writes data/repos.txt, one owner/repo per line. Needs `gh` logged in, or
 // GH_TOKEN in the environment.
 
-import { execFileSync } from 'node:child_process'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { readRepos, mergeRepos } from './candidates.mjs'
+import { createSearchRequest } from './github-search.mjs'
 
 const QUERIES = [
   'CLAUDE_CODE_ENABLE_FUNCTION_HOOKS',
   '"modules" filename:hooks.json path:hooks',
 ]
 
-function sleep(seconds) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Math.ceil(seconds * 1000))
-}
-
 const PER_PAGE = 100
 const MAX_RESULTS = 1000
 const MAX_FILE_BYTES = 384 * 1024
 
 // File-size partitions bypass GitHub's per-query cap; inconsistent snapshots fail instead of losing candidates.
-export function search(q, run = ghSearchPage, attempts = 4, wait = sleep, pause = 10) {
-  let requests = 0
-  const page = (query, n) => retry(() => {
-    if (requests++) wait(pause)
-    const result = run(query, n)
-    if (result.incomplete_results === true) {
-      const error = new Error(`incomplete search results for ${query}`)
-      error.retryable = true
-      throw error
-    }
+export function search(q, request = createSearchRequest()) {
+  const page = (query, n) => {
+    const result = request(query, n)
     if (!Number.isInteger(result.total_count) || result.total_count < 0 || result.incomplete_results !== false || !Array.isArray(result.items)) {
       throw new Error(`invalid search response for ${query}`)
     }
     return result
-  }, query, attempts, wait)
+  }
   const unstable = message => {
     const error = new Error(message)
     error.unstable = true
@@ -88,34 +77,11 @@ export function search(q, run = ghSearchPage, attempts = 4, wait = sleep, pause 
   return items.map(item => item.repository.full_name)
 }
 
-function retry(fn, q, attempts, wait) {
-  let last
-  for (let i = 1; i <= attempts; i++) {
-    try {
-      return fn()
-    } catch (e) {
-      last = e
-      const msg = e.stderr?.toString().trim() || e.message
-      const hinted = /try again in (\d+(?:\.\d+)?)s/.exec(msg)
-      const limited = e.retryable || hinted || /HTTP (403|429)/.test(msg)
-      console.error(`search failed for ${q} (attempt ${i} of ${attempts}): ${msg}`)
-      if (!limited || i === attempts) break
-      wait(Math.max(hinted ? Math.ceil(Number(hinted[1])) + 1 : 0, 60 * i))
-    }
-  }
-  throw new Error(`code search failed for ${q}: ${last?.stderr?.toString().trim() || last?.message}`)
-}
-
-function ghSearchPage(q, page) {
-  const out = execFileSync('gh', ['api', '-X', 'GET', 'search/code', '-f', `q=${q}`, '-f', `per_page=${PER_PAGE}`, '-f', `page=${page}`,
-  ], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
-  return JSON.parse(out)
-}
-
 if (import.meta.url === `file://${process.argv[1]}`) {
   const seeds = readRepos('data/seeds.txt')
   const previous = readRepos('data/repos.txt')
-  const discovered = QUERIES.flatMap(q => search(q))
+  const request = createSearchRequest()
+  const discovered = QUERIES.flatMap(q => search(q, request))
   mkdirSync('data', { recursive: true })
   const repos = mergeRepos(previous, seeds, discovered)
   writeFileSync('data/repos.txt', repos.join('\n') + '\n')
