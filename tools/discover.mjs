@@ -5,7 +5,8 @@
 // GH_TOKEN in the environment.
 
 import { execFileSync } from 'node:child_process'
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { readRepos, mergeRepos } from './candidates.mjs'
 
 const QUERIES = [
   'CLAUDE_CODE_ENABLE_FUNCTION_HOOKS',
@@ -17,24 +18,74 @@ function sleep(seconds) {
 }
 
 const PER_PAGE = 100
-const MAX_PAGES = 10
+const MAX_RESULTS = 1000
+const MAX_FILE_BYTES = 384 * 1024
 
-// Code search returns at most 1000 results, 100 a page. The pages are fetched one at a
-// time with a pause between them: a burst of page requests trips the secondary limit
-// even when the ten-a-minute budget has room (438 results, five pages, and a fresh run
-// still got a 429 on its first attempt). A page that is rate-limited is retried after at
-// least a minute per attempt, or the hint when that is longer, since the hint is often
-// a few seconds while the window lasts a minute or more. A search that still fails
-// after the retries throws: an empty result here is not "no mods", it is "no answer".
+// File-size partitions bypass GitHub's per-query cap; inconsistent snapshots fail instead of losing candidates.
 export function search(q, run = ghSearchPage, attempts = 4, wait = sleep, pause = 10) {
-  const found = []
-  for (let page = 1; page <= MAX_PAGES; page++) {
-    if (page > 1) wait(pause)
-    const items = retry(() => run(q, page), q, attempts, wait)
-    found.push(...items)
-    if (items.length < PER_PAGE) break
+  let requests = 0
+  const page = (query, n) => retry(() => {
+    if (requests++) wait(pause)
+    const result = run(query, n)
+    if (result.incomplete_results === true) {
+      const error = new Error(`incomplete search results for ${query}`)
+      error.retryable = true
+      throw error
+    }
+    if (!Number.isInteger(result.total_count) || result.total_count < 0 || result.incomplete_results !== false || !Array.isArray(result.items)) {
+      throw new Error(`invalid search response for ${query}`)
+    }
+    return result
+  }, query, attempts, wait)
+  const unstable = message => {
+    const error = new Error(message)
+    error.unstable = true
+    throw error
   }
-  return found
+  const collect = (query, first) => {
+    const items = [...first.items]
+    for (let n = 2; n <= Math.ceil(first.total_count / PER_PAGE); n++) {
+      const next = page(query, n)
+      if (next.total_count !== first.total_count) unstable(`search count changed while paging ${query}`)
+      items.push(...next.items)
+    }
+    const files = new Set(items.map(item => {
+      if (!item.repository?.full_name || typeof item.path !== 'string') throw new Error(`invalid search item for ${query}`)
+      return `${item.repository.full_name.toLowerCase()}:${item.path}`
+    }))
+    if (files.size !== first.total_count || items.length !== first.total_count) unstable(`partial pagination for ${query}: got ${files.size} of ${first.total_count} files`)
+    return items
+  }
+  const partition = (lo, hi) => {
+    const query = `${q} size:${lo}..${hi}`
+    const first = page(query, 1)
+    if (first.total_count <= MAX_RESULTS) {
+      try { return collect(query, first) } catch (error) {
+        if (!error.unstable || lo === hi) throw error
+        console.error(`${error.message}; splitting into smaller searches`)
+      }
+    }
+    if (lo === hi) throw new Error(`search still capped at file size ${lo} for ${q}; refusing partial discovery`)
+    const mid = Math.floor((lo + hi) / 2)
+    const items = [...partition(lo, mid), ...partition(mid + 1, hi)]
+    return items
+  }
+  const first = page(q, 1)
+  if (first.total_count <= MAX_RESULTS) {
+    try { return collect(q, first).map(item => item.repository.full_name) } catch (error) {
+      if (!error.unstable) throw error
+      console.error(`${error.message}; splitting into smaller searches`)
+    }
+  }
+  const items = partition(0, MAX_FILE_BYTES - 1)
+  // Check the tail too, so a future increase in GitHub's file-size limit cannot lose results silently.
+  const tailQuery = `${q} size:>=${MAX_FILE_BYTES}`
+  const tail = page(tailQuery, 1)
+  if (tail.total_count > MAX_RESULTS) throw new Error(`search capped beyond supported file-size range for ${q}`)
+  items.push(...collect(tailQuery, tail))
+  // Independent queries do not share an index snapshot. Each leaf must be complete; parent totals can move meanwhile.
+  if (items.length !== first.total_count) console.error(`search index changed during ${q}: initial ${first.total_count} files, complete partitions returned ${items.length}`)
+  return items.map(item => item.repository.full_name)
 }
 
 function retry(fn, q, attempts, wait) {
@@ -46,10 +97,10 @@ function retry(fn, q, attempts, wait) {
       last = e
       const msg = e.stderr?.toString().trim() || e.message
       const hinted = /try again in (\d+(?:\.\d+)?)s/.exec(msg)
-      const limited = hinted || /HTTP (403|429)/.test(msg)
+      const limited = e.retryable || hinted || /HTTP (403|429)/.test(msg)
       console.error(`search failed for ${q} (attempt ${i} of ${attempts}): ${msg}`)
       if (!limited || i === attempts) break
-      wait(Math.max(hinted ? Number(hinted[1]) + 2 : 0, 60 * i))
+      wait(Math.max(hinted ? Math.ceil(Number(hinted[1])) + 1 : 0, 60 * i))
     }
   }
   throw new Error(`code search failed for ${q}: ${last?.stderr?.toString().trim() || last?.message}`)
@@ -57,30 +108,16 @@ function retry(fn, q, attempts, wait) {
 
 function ghSearchPage(q, page) {
   const out = execFileSync('gh', ['api', '-X', 'GET', 'search/code', '-f', `q=${q}`, '-f', `per_page=${PER_PAGE}`, '-f', `page=${page}`,
-    '--jq', '.items[].repository.full_name'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
-  return out.split('\n').filter(Boolean)
-}
-
-// A candidate list that shrinks by more than half overnight is a broken
-// search, not a vanished ecosystem. Refuse to write it.
-export function shrunk(previousCount, foundCount) {
-  return previousCount >= 5 && foundCount < Math.ceil(previousCount / 2)
+  ], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
+  return JSON.parse(out)
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const seeds = (() => { try { return readFileSync('data/seeds.txt', 'utf8').split('\n') } catch { return [] } })()
-    .map(l => l.trim()).filter(l => l && !l.startsWith('#'))
-  const previous = (() => { try { return readFileSync('data/repos.txt', 'utf8').split('\n').filter(l => l.trim() && !l.startsWith('#')).length } catch { return 0 } })()
-
-  const found = new Set(seeds)
-  for (const q of QUERIES) for (const r of search(q)) found.add(r)
-
-  if (shrunk(previous, found.size)) {
-    console.error(`discover found ${found.size} candidate repos, the committed list has ${previous}; refusing to overwrite data/repos.txt`)
-    process.exit(1)
-  }
+  const seeds = readRepos('data/seeds.txt')
+  const previous = readRepos('data/repos.txt')
+  const discovered = QUERIES.flatMap(q => search(q))
   mkdirSync('data', { recursive: true })
-  const repos = [...found].sort((a, b) => a.localeCompare(b))
+  const repos = mergeRepos(previous, seeds, discovered)
   writeFileSync('data/repos.txt', repos.join('\n') + '\n')
   console.log(`${repos.length} candidate repos (${seeds.length} seeds)`)
 }

@@ -10,7 +10,7 @@ on:
         type: boolean
         default: false
   pull_request:
-    paths: ["tools/**", "data/seeds.txt", "package.json", "package-lock.json", ".github/workflows/nightly.yml"]
+    paths: ["tools/**", "data/seeds.txt", "package.json", "package-lock.json", ".github/workflows/nightly.yml", ".github/workflows/weekly-retirement.yml"]
 
 permissions:
   contents: write
@@ -27,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -39,14 +41,21 @@ jobs:
       - run: npm test
       - run: npx playwright install --with-deps chromium
       - run: npm run test:render
-      # A pull request run scans the committed candidate list instead of searching GitHub code:
-      # the search is the one step that rate-limits, and the tooling under review is exercised
-      # by scan, render and lint either way. Discovery runs nightly and on dispatch.
+      # PRs include submitted seeds without spending the global search rate limit.
       - run: npm run discover
         if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
+      - run: node tools/candidates.mjs --base "$PR_BASE"
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+      - run: npm run scan -- --repos data/pr-repos.txt --required data/pr-required.txt
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
       - run: npm run scan
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
       - run: npm run render
@@ -81,5 +90,5 @@ jobs:
           branch: nightly-scan
           title: "Nightly scan: refresh footprints and badges"
           commit-message: "Nightly scan: refresh footprints and badges"
-          body: "Automated rescan of every candidate repo against the current Claude Code release. Opened only when a mod appeared, disappeared, changed footprint, stopped validating, or the Claude Code version moved; Sundays also refresh stars. Review the diff in README.md and data/mods.json, then merge."
+          body: "Automated discovery and rescan against the current Claude Code release. Known candidates are retained; missing plugins remain unverified until the weekly retirement review. Opened when inventory or validation changes; Sundays also refresh stars. Review README.md and data/mods.json before merging."
           labels: scan

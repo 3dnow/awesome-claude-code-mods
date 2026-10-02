@@ -1,0 +1,57 @@
+name: weekly retirement review
+
+on:
+  schedule:
+    - cron: "30 18 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: scan
+  cancel-in-progress: false
+
+jobs:
+  retire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Claude Code
+        run: |
+          curl -fsSL https://claude.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - run: npm ci
+      - run: npm test
+      - run: npm run scan -- --retire
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Check proposed removals
+        id: removals
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; const r = JSON.parse(fs.readFileSync("data/retirements.json")); fs.appendFileSync(process.env.GITHUB_OUTPUT, `found=${r.plugins.length + r.repos.length > 0}\n`)'
+          set +e
+          node tools/changed.mjs
+          rc=$?
+          set -e
+          if [ "$rc" -gt 1 ]; then exit "$rc"; fi
+      - run: npm run render
+        if: steps.removals.outputs.found == 'true'
+      - run: npm run lint
+        if: steps.removals.outputs.found == 'true'
+      - name: Discard an empty retirement proposal
+        if: steps.removals.outputs.found != 'true'
+        run: |
+          git checkout -- .
+          git ls-files --error-unmatch data/retirements.json >/dev/null 2>&1 || rm -f data/retirements.json
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: weekly-retirement
+          title: "Weekly review: retire missing hook modules"
+          commit-message: "Retire hook modules absent from fresh checkouts"
+          body: "Fresh successful checkouts no longer contain the recorded hook modules. Review data/retirements.json for repository revisions and removal reasons. Failed clones and validation failures are not removal evidence. This refresh includes the accompanying scan results and generated files. Merge only after reviewing the evidence."
+          labels: scan
