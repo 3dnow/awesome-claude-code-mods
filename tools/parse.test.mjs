@@ -139,6 +139,23 @@ test('fixtures never count', () => {
   assert.equal(fingerprint(base), fingerprint(after))
 })
 
+test('benchmark fixtures stay out without excluding usable evaluation mods', () => {
+  for (const path of ['lab/bench', 'benchmarks/baseline', 'benchmark/no-trace']) {
+    assert.equal(kindOf('a/b', path, { name: 'baseline' }), 'fixture')
+  }
+  assert.equal(kindOf('a/b', 'eval/judge', { description: 'Benchmark harness, not a plugin to install: scores labelled steps.' }), 'fixture')
+  assert.equal(kindOf('a/b', '.', { description: 'Not an installable plugin.' }), 'fixture')
+  assert.equal(kindOf('a/b', 'plugins/benchmark-dashboard', { description: 'Displays benchmark results in a pane.' }), 'mod')
+  assert.equal(kindOf('a/b', 'eval/assistant', { description: 'Evaluates the current session.' }), 'mod')
+  assert.equal(kindOf('a/b', '.', { description: 'Uses a local harness daemon.' }), 'mod')
+})
+
+test('reserved-name failures retain the validator reason', () => {
+  const result = parseValidateOutput('✘ Found 1 error:\n  ❯ name: Plugin name "claude-example" is reserved.\n✘ Validation failed\n')
+  assert.equal(result.status, 'failed')
+  assert.deepEqual(result.errors, ['name: Plugin name "claude-example" is reserved.'])
+})
+
 test('a scan that lost most of its mods or repos is partial, a small dip is not', () => {
   const many = { repos: 90, mods: Array.from({ length: 30 }, (_, i) => ({ id: `r/${i}:.`, kind: 'mod' })) }
   const few = { repos: 2, mods: many.mods.slice(0, 1) }
