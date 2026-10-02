@@ -11,6 +11,7 @@
     "discover": "node tools/discover.mjs",
     "scan": "node tools/scan.mjs",
     "render": "node tools/render.mjs",
+    "render:social": "node tools/render-social.mjs",
     "refresh": "npm run discover && npm run scan && npm run render"
   },
   "devDependencies": {

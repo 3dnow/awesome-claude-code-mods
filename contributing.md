@@ -55,3 +55,13 @@ npm run scan -- --retire  # weekly removal audit; writes revision evidence for r
 npm run render      # regenerate README blocks, badges/, docs/ and docs/badges/
 node tools/changed.mjs   # exit 0 if the scan differs from HEAD on anything but stars and timestamps
 ```
+
+### Website
+
+The landing page is generated from `data/mods.json`. Edit `tools/site.mjs`, `tools/site.css` or `tools/site-client.js`, then run `npm run render`. Do not edit `docs/index.html` directly.
+
+The featured entries are keyed by repository and mod name. They appear only while the mod is present in the scan. Search, filtering and sorting run in the browser; the full collection remains readable without JavaScript.
+
+Run `npm run test:render` to check the generated page and its browser interactions. Preview the `docs/` folder with a local static server. GitHub Pages serves this folder, with the domain in `docs/CNAME`.
+
+The social sharing graphic comes from `tools/social.html`. Run `npm run render:social` after editing it. This is a designed graphic, not a screenshot of a running mod.
