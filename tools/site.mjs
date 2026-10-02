@@ -10,6 +10,12 @@ const arrow = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="
 const mark = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M11 5H5v22h6M21 5h6v22h-6M16 10v12M10 16h12"/></svg>'
 const levels = ['Draws & remembers', 'Reads files', 'Writes or runs', 'Uses the network']
 const hookText = hook => hook.event + (Object.keys(hook.matcher).length ? ' {' + Object.entries(hook.matcher).map(([k, v]) => `${k}=${v}`).join(', ') + '}' : '')
+const sourceUrl = (mod, file, line) => `https://github.com/${mod.repo}/blob/${mod.sourceCommit ?? mod.defaultBranch ?? 'main'}/${file.split('/').map(encodeURIComponent).join('/')}${line ? '#L' + line : ''}`
+export const reviewNotes = mod => [
+  ...((mod.marketplaces ?? []).some(p => p.status === 'failed') ? ['marketplace fails'] : []),
+  ...((mod.marketplaces ?? []).some(p => p.status === 'unknown') ? ['marketplace not verified'] : []),
+  ...(mod.compatibility?.warnings?.length ? ['review UI rewrite'] : []),
+]
 
 export function renderSite(data) {
   const mods = data.mods.filter(mod => mod.kind === 'mod')
@@ -19,6 +25,8 @@ export function renderSite(data) {
   const dateLabel = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(data.generated))
   const reachText = mod => mod.reach.labels.join(', ') || 'draws only'
   const status = mod => ['passed', 'warnings'].includes(mod.validate.status) ? (mod.validate.status === 'warnings' ? 'Passed with warnings' : 'Passed') : mod.validate.status === 'failed' ? `fails on ${data.claudeVersion}` : 'not verified'
+  const compatibilityDetail = mod => (mod.marketplaces ?? []).map(p => `<dt>Marketplace ${esc(p.status)}</dt><dd><a href="${esc(sourceUrl(mod, p.path))}">${esc(p.name ?? p.path)}</a>${p.errors.length ? ': ' + esc(p.errors.join('; ')) : ''}</dd>`).join('')
+    + (mod.compatibility?.warnings ?? []).map(w => `<dt>UI rewrite review</dt><dd>${esc(w.message)} ${(w.evidence ?? []).map(e => `<a href="${esc(sourceUrl(mod, e.file, e.line))}">${esc(e.file)}:${e.line}</a>`).join(', ')}</dd>`).join('')
   const detail = mod => `<details><summary>Access & validation details</summary><dl>
     <dt>Observed events</dt><dd>${esc(mod.sees.join(', ') || 'Only what it hooks')}</dd>
     <dt>Hooks</dt><dd><code>${esc(mod.hooks.map(hookText).join(', ') || 'none')}</code></dd>
@@ -26,11 +34,12 @@ export function renderSite(data) {
     ${mod.surfaceModules.length ? `<dt>Surface modules</dt><dd><code>${esc(mod.surfaceModules.join(', '))}</code></dd>` : ''}
     <dt>Validation on ${esc(data.claudeVersion)}</dt><dd>${esc(status(mod))}</dd>
     ${mod.validate.errors.length ? `<dt>Validator output</dt><dd>${esc(mod.validate.errors.join('; '))}</dd>` : ''}
+    ${compatibilityDetail(mod)}
     </dl></details>`
   const track = mod => `<span class="track" aria-label="Reach level ${mod.reach.level}: ${levels[mod.reach.level]}">${[0, 1, 2, 3].map(i => `<i class="${i <= mod.reach.level ? 'on l' + mod.reach.level : ''}"></i>`).join('')}</span>`
   const row = mod => `<tr id="${esc(slug(mod))}" data-level="${mod.reach.level}" data-name="${esc(mod.name)} ${esc(mod.repo)} ${esc(mod.description)}" data-stars="${mod.stars ?? -1}">
     <td class="identity"><a class="mod-name" href="${url(mod.url)}">${esc(mod.name)}${arrow}</a><span class="repo">${esc(mod.repo)}</span></td>
-    <td class="description"><p>${esc(mod.description || 'No description provided by the author.')}</p>${detail(mod)}</td>
+    <td class="description"><p>${esc(mod.description || 'No description provided by the author.')}</p>${reviewNotes(mod).length ? `<p class="compatibility">${esc(reviewNotes(mod).join('; '))}</p>` : ''}${detail(mod)}</td>
     <td class="reach">${track(mod)}<span class="labels">${esc(reachText(mod))}</span>${mod.validate.status === 'failed' || !['passed', 'warnings'].includes(mod.validate.status) ? `<span class="status bad">${esc(status(mod))}</span>` : mod.validate.status === 'warnings' ? '<span class="status">Validator warnings</span>' : ''}</td>
     <td class="num"><span class="mobile-label">Repository stars </span>${mod.stars == null ? 'Unknown' : Number(mod.stars).toLocaleString('en')}</td></tr>`
   const heading = sortable => `<thead><tr><th scope="col">${sortable ? '<button type="button" data-k="name">Mod <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5 12V3L2 6m3-3 3 3m3-2v9l-3-3m3 3 3-3"/></svg></button>' : 'Mod'}</th><th scope="col">What it does</th><th scope="col">${sortable ? '<button type="button" data-k="level">Access <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5 12V3L2 6m3-3 3 3m3-2v9l-3-3m3 3 3-3"/></svg></button>' : 'Access'}</th><th scope="col" class="num">${sortable ? '<button type="button" data-k="stars">Repo stars <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5 12V3L2 6m3-3 3 3m3-2v9l-3-3m3 3 3-3"/></svg></button>' : 'Repo stars'}</th></tr></thead>`
@@ -62,7 +71,7 @@ export function renderSite(data) {
 </section>
 <div class="info"><section class="about" id="about"><div class="shell about-grid"><h2>Your session.<br>A few new tricks.</h2><div><p>Mods are Claude Code plugins that run JavaScript or TypeScript hooks inside your session. They can add a dashboard, open a pane, change tool behavior, or bring context into the conversation.</p><p>Mods are on by default in Claude Code 2.1.287 and later. Choose a mod, open its repository, and follow the author’s setup instructions. The API can change between releases.</p><a class="text-link" href="${repo}#use-mods">How to use mods ${arrow}</a><a class="text-link" href="https://claude.dev/blog/getting-started-with-claude-code-mods/">Build your first mod ${arrow}</a></div></div></section>
 <section class="method shell" id="method" aria-labelledby="method-title"><div class="section-heading"><div><h2 id="method-title">A closer look at access.</h2><p>One mark per mod, colored by its widest recorded access. Select a mark to find its entry.</p></div><a href="./mods.json">Download the data ${arrow}</a></div><div class="strip" role="group" aria-label="Mods coloured by access level, draws only through network">${strip}</div><ul class="strip-legend" aria-label="Access color legend">${levels.map((label, level) => { const count = mods.filter(mod => mod.reach.level === level).length; return `<li><i class="l${level}" aria-hidden="true"></i><span>${esc(label)}</span><span class="legend-count">${count} ${count === 1 ? 'mod' : 'mods'}</span></li>` }).join('')}</ul>
-<div class="method-copy"><p>Each entry records the hooks and API calls reported by <code>claude plugin validate</code>. Access levels describe the widest reach of those calls. They are not safety ratings.</p><p>Validation is a static check, not a runtime compatibility test. A passing result does not prove that a mod works or is safe. Check the source and its setup instructions before installing.</p></div>
+<div class="method-copy"><p>Each entry records the hooks and API calls reported by <code>claude plugin validate</code>. Access levels describe the widest reach of those calls. They are not safety ratings.</p><p>Validation is a static check, not a runtime compatibility test. A passing result does not prove that a mod works or is safe. Marketplace results describe that install route separately. “Review UI rewrite” flags control-character strings in UI source or local imports; it does not prove those strings reach a text rewrite. Open “Access &amp; validation details” for errors and source links. See the <a href="${repo}/issues/21">2.1.287 compatibility report</a>.</p></div>
 <div class="scan-note"><p>This scan used Claude Code ${esc(data.claudeVersion)} on ${dateLabel}. <a href="${repo}#how-the-scan-works">Read the method</a>.</p>${catalogs.length ? `<p>Repackaged catalogs are excluded from the mod count: ${catalogs.map(name => `<a href="https://github.com/${esc(name)}">${esc(name)}</a>`).join(', ')}.</p>` : ''}</div>
 ${builtins.length ? `<details class="builtins"><summary>Also built into Claude Code <span>${builtins.length} mods</span></summary><p>These ship inside the binary. sec-default seats outermost only on managed machines and Team or Enterprise plans.</p><table><caption class="sr-only">Built-in Claude Code mods</caption>${heading(false)}<tbody>${builtins.map(row).join('\n')}</tbody></table></details>` : ''}
 </section></div></main>

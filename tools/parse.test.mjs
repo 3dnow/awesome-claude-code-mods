@@ -156,6 +156,11 @@ test('reserved-name failures retain the validator reason', () => {
   assert.deepEqual(result.errors, ['name: Plugin name "claude-example" is reserved.'])
 })
 
+test('validator inventory notes and warnings are not validation errors', () => {
+  const result = parseValidateOutput('Validating plugin manifest: plugin.json\n✘ Found 1 error:\n  ❯ name: Plugin name is reserved.\n  ❯ types ./types.d.ts declares on $: $.runtime\nValidating hooks: hooks/hooks.json\n  ❯ ./register.ts env reads: HOME\n  ❯ ./register.ts env writes: nothing\n⚠ Found 1 warning:\n  ❯ author: No author information provided\n✘ Validation failed\n')
+  assert.deepEqual(result.errors, ['name: Plugin name is reserved.'])
+})
+
 test('a scan that lost most of its mods or repos is partial, a small dip is not', () => {
   const many = { repos: 90, mods: Array.from({ length: 30 }, (_, i) => ({ id: `r/${i}:.`, kind: 'mod' })) }
   const few = { repos: 2, mods: many.mods.slice(0, 1) }
