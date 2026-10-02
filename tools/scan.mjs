@@ -6,28 +6,38 @@
 //   node tools/scan.mjs [--clones DIR] [--repos FILE] [--out FILE]
 
 import { execFileSync, spawnSync } from 'node:child_process'
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join, relative, dirname } from 'node:path'
 import { tmpdir } from 'node:os'
 import { parseValidateOutput } from './parse.mjs'
 import { grade, visibility, drawsOn } from './grade.mjs'
 import { readDuplicates, applyDuplicates, suspectDuplicates } from './dedupe.mjs'
 import { kindOf, readCatalogs } from './kind.mjs'
+import { parseArgs } from 'node:util'
+import { readRepos, mergeRepos } from './candidates.mjs'
+import { reconcile, checkRequired } from './inventory.mjs'
 
-const args = Object.fromEntries(process.argv.slice(2).map((a, i, all) => a.startsWith('--') ? [a.slice(2), all[i + 1]] : []).filter(Boolean))
-const CLONES = args.clones ?? join(tmpdir(), 'acm-clones')
+const { values: args } = parseArgs({ options: {
+  clones: { type: 'string' }, repos: { type: 'string' }, out: { type: 'string' },
+  required: { type: 'string' }, retire: { type: 'boolean', default: false },
+} })
+const CLONES = args.clones ?? mkdtempSync(join(tmpdir(), 'acm-clones-'))
 const REPOS = args.repos ?? 'data/repos.txt'
 const OUT = args.out ?? 'data/mods.json'
 const SKIP_DIRS = new Set(['node_modules', '.git'])
 
 const claudeVersion = execFileSync('claude', ['--version'], { encoding: 'utf8' }).trim().split(' ')[0]
-const repos = readFileSync(REPOS, 'utf8').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'))
+if (!existsSync(REPOS)) throw new Error(`candidate list not found: ${REPOS}`)
+const repos = mergeRepos(readRepos(REPOS))
+const previous = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')).mods : []
+if (!Array.isArray(previous)) throw new Error(`invalid previous inventory: ${OUT}`)
+const checkedRepos = new Map()
 const catalogs = readCatalogs()
 mkdirSync(CLONES, { recursive: true })
 
 function clone(repo) {
   const dir = join(CLONES, repo.replace('/', '__'))
-  if (existsSync(dir)) return dir
+  if (existsSync(dir)) throw new Error(`refusing cached checkout ${dir}; use a fresh clones directory`)
   const r = spawnSync('git', ['clone', '-q', '--depth', '1', `https://github.com/${repo}`, dir], { encoding: 'utf8' })
   if (r.status !== 0) { console.error(`clone failed: ${repo}: ${r.stderr.trim()}`); return null }
   return dir
@@ -57,14 +67,21 @@ function meta(repo) {
 
 function readJson(p) { try { return JSON.parse(readFileSync(p, 'utf8')) } catch { return null } }
 
-const mods = []
+let mods = []
 const seen = new Set()
 for (const repo of repos) {
   const dir = clone(repo)
   if (!dir) continue
+  const revision = execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
+  let complete = true
   const m = meta(repo)
   for (const hooksPath of hooksFiles(dir)) {
     const hooks = readJson(hooksPath)
+    if (!hooks || typeof hooks !== 'object' || Array.isArray(hooks) || ('modules' in hooks && !Array.isArray(hooks.modules))) {
+      complete = false
+      console.error(`cannot inspect malformed hooks: ${repo}:${relative(dir, hooksPath)}`)
+      continue
+    }
     if (!hooks || !Array.isArray(hooks.modules) || hooks.modules.length === 0) continue
     const root = dirname(dirname(hooksPath))
     const rel = relative(dir, root) || '.'
@@ -108,12 +125,26 @@ for (const repo of repos) {
     })
     console.log(`${parsed.status.padEnd(8)} L${reach.level} ${id}`)
   }
+  if (complete) checkedRepos.set(repo.toLowerCase(), revision)
 }
 
+if (args.required) checkRequired(readRepos(args.required), mods, checkedRepos)
+const inventory = reconcile(previous, mods, checkedRepos, args.retire)
+mods = inventory.mods
+if (args.retire) {
+  const seeded = new Set(readRepos('data/seeds.txt').map(repo => repo.toLowerCase()))
+  const populated = new Set(mods.map(mod => mod.repo.toLowerCase()))
+  const removed = repos.filter(repo => checkedRepos.has(repo.toLowerCase()) && !populated.has(repo.toLowerCase()) && !seeded.has(repo.toLowerCase()))
+  writeFileSync(REPOS, repos.filter(repo => !removed.includes(repo)).join('\n') + '\n')
+  writeFileSync('data/retirements.json', JSON.stringify({
+    checkedAt: new Date().toISOString(), plugins: inventory.retired,
+    repos: removed.map(repo => ({ repo, revision: checkedRepos.get(repo.toLowerCase()), reason: 'no hook modules in a fresh checkout' })),
+  }, null, 2) + '\n')
+}
 applyDuplicates(mods, readDuplicates())
 for (const pair of suspectDuplicates(mods)) console.log(`possible duplicate: ${pair.join(' and ')} share an owner and a name; if they are one mod, add the pair to data/duplicates.txt`)
 mods.sort((a, b) => (b.stars ?? -1) - (a.stars ?? -1) || a.id.localeCompare(b.id))
 mkdirSync(dirname(OUT), { recursive: true })
-writeFileSync(OUT, JSON.stringify({ generated: new Date().toISOString(), claudeVersion, repos: repos.length, mods }, null, 2) + '\n')
+writeFileSync(OUT, JSON.stringify({ generated: new Date().toISOString(), claudeVersion, repos: readRepos(REPOS).length, mods }, null, 2) + '\n')
 const real = mods.filter(x => x.kind === 'mod')
 console.log(`\n${mods.length} plugins with hook modules in ${repos.length} repos; ${real.length} are mods (rest: builtin, mirror, fixture, duplicate, catalog). Written to ${OUT}`)

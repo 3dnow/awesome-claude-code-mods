@@ -4,7 +4,7 @@ Two ways to get a mod listed.
 
 ## Let the scanner find it
 
-The nightly scan searches GitHub for repositories that mention `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS` or ship a `hooks/hooks.json` with a `modules` key. If your repo is public and does either, it shows up on the next run. The GitHub code search index can lag by days, so if you want it sooner, use the second way.
+The nightly scan searches GitHub for repositories that mention `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS` or ship a `hooks/hooks.json` with a `modules` key. Public repositories matching those patterns become candidates once GitHub indexes them and discovery succeeds. Results appear after the generated update pull request is merged. Known candidates are retained even when a later search omits them.
 
 ## Open a pull request
 
@@ -16,6 +16,10 @@ The nightly scan searches GitHub for repositories that mention `CLAUDE_CODE_ENAB
    `- [name](https://github.com/owner/repo) - What it does, one sentence, ending with a period.`
 
 3. Run `npm test` and `npm run lint`. Both must pass.
+
+PR checks scan submitted seeds alongside the committed candidates. A newly added seed must clone successfully and contain mod plugins that validate; warnings are allowed. Global search runs nightly, not in PR checks.
+
+Missing plugins stay listed as unverified during daily scans. Weekly retirement proposals require a fresh successful checkout and record the revision used to establish that a hook module is gone. Clone failures and failed validation are not removal evidence. Curated descriptions need a separate human review when an upstream project changes.
 
 Do not edit anything between `<!-- scan:start -->` and `<!-- scan:end -->`, `<!-- builtin:start -->` and `<!-- builtin:end -->`, or `<!-- stats:start -->` and `<!-- stats:end -->`. The scanner regenerates those blocks and would overwrite your change.
 
@@ -47,6 +51,7 @@ npm run test:render  # generated statuses, badges and responsive layout
 npm run lint        # awesome-lint on README.md
 npm run discover    # refresh data/repos.txt (needs gh logged in)
 npm run scan        # clone, validate, write data/mods.json (needs the claude CLI)
+npm run scan -- --retire  # weekly removal audit; writes revision evidence for review
 npm run render      # regenerate README blocks, badges/, docs/ and docs/badges/
 node tools/changed.mjs   # exit 0 if the scan differs from HEAD on anything but stars and timestamps
 ```
