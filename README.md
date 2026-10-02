@@ -2,7 +2,7 @@
 
 > Every Claude Code mod on GitHub, with what each one can reach.
 
-A Claude Mod is a Claude Code plugin whose hooks are TypeScript functions that run inside Claude Code's own process. They draw above the prompt, open panes beside the transcript, rewrite tool calls, spawn agents and touch the host, all with zero tokens. Anthropic proposed them as function hooks on 2026-09-03 and committed to shipping them on 2026-09-09; the design thread is listed under Building mods below. They are early access: set `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1` or nothing loads, and the API can change between releases.
+A Claude Mod is a Claude Code plugin whose hooks are JavaScript or TypeScript functions that run inside your session. They can draw above the prompt, open panes beside the transcript, rewrite tool calls, spawn agents and access the host through the mods API. Mods are on by default in Claude Code **2.1.287 or later**. The API can change between releases; the official guide and original design thread are listed under Building mods below.
 
 This list is different from a plain index in one way. Every row carries the mod's **footprint**: the events it hooks and the `$` calls it makes, printed by Claude's own `claude plugin validate` before any mod code runs. A nightly scan clones every candidate repo on GitHub and refreshes the table, the badges and the [scoreboard page](https://mods.karanbansal.in/), which is generated from the same data. The method is described below the tables.
 
@@ -23,7 +23,7 @@ As of 2026-10-02, scanned against Claude Code 2.1.287: **359 mods** in **373 can
 - [Every mod the scanner found](#every-mod-the-scanner-found)
 - [Built into Claude Code](#built-into-claude-code)
 - [How the scan works](#how-the-scan-works)
-- [Turn mods on](#turn-mods-on)
+- [Use mods](#use-mods)
 - [Related](#related)
 
 ## Dashboards and usage
@@ -88,6 +88,8 @@ As of 2026-10-02, scanned against Claude Code 2.1.287: **359 mods** in **373 can
 
 ## Building mods
 
+- [Getting started with Claude Code mods](https://claude.dev/blog/getting-started-with-claude-code-mods/) - Anthropic's guide to building, testing and sharing a mod, with version requirements and working examples.
+- [Claude Code mods announcement](https://claude.com/blog/claude-code-mods) - The launch overview for customizing behavior and UI in the terminal and desktop app.
 - [Function Hooks: the issue](https://github.com/anthropics/claude-code/issues/91870) - The design thread: architecture PDF, nine demo videos, the cheat sheet and the community updates.
 - [Anthropic's built-in mods](https://github.com/anthropics/claude-code/tree/main/mods) - Source of diff, sec-default and telemetry, with the test kit and the noun-contract convention.
 - [claude-mods-skill](https://github.com/BeLazy167/claude-mods-skill) - A skill that teaches Claude to build a mod, with a working hello-mod to copy.
@@ -484,13 +486,11 @@ Benchmark directories and plugins that identify themselves as fixtures or non-in
 
 The raw result is `data/mods.json`. Every row can be reproduced on your machine with the commands in `contributing.md`, which also has the one-line badge for your own mod.
 
-## Turn mods on
+## Use mods
 
-```json
-{ "env": { "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS": "1" } }
-```
+Check `claude --version`: use **2.1.287 or later**, where mods are on by default. Follow the chosen mod's installation instructions, or load a local plugin with `claude --plugin-dir ./path/to/plugin`.
 
-in `~/.claude/settings.json`, or for one session: `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 claude`. Setting it globally loads the hooks module of every installed plugin that ships one, which is exactly what the footprints above are for.
+The September preview required `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1`; you do not need to add it on these versions. Review a mod's footprint and source before installing it. A footprint is a static inventory, not a runtime safety guarantee.
 
 ## Related
 
