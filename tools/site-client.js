@@ -22,7 +22,6 @@
     reset.hidden = !search && !level
     clearSearch.hidden = q.value.length === 0
     document.getElementById('empty').hidden = visible !== 0
-    document.getElementById('star-nudge').hidden = visible === 0
   }
 
   function clear() {
