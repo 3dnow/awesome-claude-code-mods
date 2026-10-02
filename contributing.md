@@ -44,8 +44,10 @@ The footprint is whatever `claude plugin validate` printed for your plugin on th
 
 ## Running the tools
 
+The scan keeps plugin validation, marketplace validation and UI source warnings separate. For a reserved-name failure, rename the manifest entry and update its marketplace listing and install instructions. For a UI source warning, inspect the linked strings and any values passed to `next()` as `props.text`. Use plain text for rewrites, then test the mod in an interactive session. A static pass alone does not test that path. The [compatibility report](https://github.com/karanb192/awesome-claude-code-mods/issues/21) describes the 2.1.287 restrictions.
+
 ```sh
-npm test            # parser and grader tests
+npm test            # parser, grader and compatibility scanner tests
 npx playwright install chromium  # once, for browser checks
 npm run test:render  # generated statuses, badges and responsive layout
 npm run lint        # awesome-lint on README.md

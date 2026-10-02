@@ -6,10 +6,11 @@
 //   node tools/scan.mjs [--clones DIR] [--repos FILE] [--out FILE]
 
 import { execFileSync, spawnSync } from 'node:child_process'
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs'
 import { join, relative, dirname } from 'node:path'
 import { tmpdir } from 'node:os'
-import { parseValidateOutput } from './parse.mjs'
+import { validate } from './validate.mjs'
+import { uiRewriteReview, marketplacesFor } from './compatibility.mjs'
 import { grade, visibility, drawsOn } from './grade.mjs'
 import { readDuplicates, applyDuplicates, suspectDuplicates } from './dedupe.mjs'
 import { kindOf, readCatalogs } from './kind.mjs'
@@ -40,7 +41,7 @@ function clone(repo) {
   if (existsSync(dir)) throw new Error(`refusing cached checkout ${dir}; use a fresh clones directory`)
   const r = spawnSync('git', ['clone', '-q', '--depth', '1', `https://github.com/${repo}`, dir], { encoding: 'utf8' })
   if (r.status !== 0) { console.error(`clone failed: ${repo}: ${r.stderr.trim()}`); return null }
-  return dir
+  return realpathSync(dir)
 }
 
 function* hooksFiles(dir) {
@@ -69,6 +70,7 @@ function readJson(p) { try { return JSON.parse(readFileSync(p, 'utf8')) } catch 
 
 let mods = []
 const seen = new Set()
+const marketplaceResults = new Map()
 for (const repo of repos) {
   const dir = clone(repo)
   if (!dir) continue
@@ -90,17 +92,22 @@ for (const repo of repos) {
     const id = `${repo}:${rel}`
     if (seen.has(id)) continue
     seen.add(id)
-    const v = spawnSync('claude', ['plugin', 'validate', existsSync(manifestPath) ? '.claude-plugin/plugin.json' : '.'],
-      { cwd: root, encoding: 'utf8', timeout: 60000 })
-    const parsed = parseValidateOutput((v.stdout ?? '') + (v.stderr ?? ''))
+    const parsed = validate(existsSync(manifestPath) ? '.claude-plugin/plugin.json' : '.', root)
     const allHooks = parsed.modules.flatMap(x => x.hooks)
     const allCalls = [...new Set(parsed.modules.flatMap(x => x.calls))].sort()
     const reach = grade(allCalls)
     const dupKey = `${repo}:${manifest?.name}:${JSON.stringify(allHooks)}:${allCalls.join()}`
     if (seen.has(dupKey)) { console.log(`skip     duplicate ${id}`); continue }
     seen.add(dupKey)
+    const marketplaces = marketplacesFor(dir, root).map(path => {
+      if (!marketplaceResults.has(path)) {
+        const result = validate(path, dir)
+        marketplaceResults.set(path, { path: relative(dir, path), name: readJson(path)?.name ?? null, status: result.status, errors: result.errors })
+      }
+      return marketplaceResults.get(path)
+    })
     mods.push({
-      id, repo, path: rel,
+      id, repo, path: rel, sourceCommit: revision,
       name: manifest?.name ?? rel.split('/').pop(),
       description: manifest?.description ?? m.description ?? '',
       author: manifest?.author?.name ?? null,
@@ -113,6 +120,8 @@ for (const repo of repos) {
       calls: allCalls,
       surfaceModules: [...new Set(parsed.modules.flatMap(x => x.surfaceModules))],
       validate: { status: parsed.status, claudeVersion, errors: parsed.errors },
+      marketplaces,
+      compatibility: { runtime: 'not-tested', warnings: uiRewriteReview(dir, root, hooks.modules, allHooks) },
       reach,
       sees: visibility(allHooks),
       draws: [...new Set(drawsOn(allHooks))],

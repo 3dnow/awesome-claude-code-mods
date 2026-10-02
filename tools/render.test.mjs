@@ -53,13 +53,51 @@ test('render preserves failures, distinguishes unknown results and removes exclu
   }
 })
 
+test('compatibility warnings stay distinct from validation failures and link to scanned source', async t => {
+  const reviewed = {
+    ...mod(0), sourceCommit: 'a'.repeat(40),
+    marketplaces: [{ path: '.claude-plugin/marketplace.json', name: '<market>', status: 'failed', errors: ['name: reserved <name>'] }],
+    compatibility: { runtime: 'not-tested', warnings: [{ message: 'Review <text> control strings.', evidence: [{ file: 'plugins/mod-0/hooks/colour.ts', line: 12 }] }] },
+  }
+  const dir = fixture(t, [reviewed, { ...mod(1), marketplaces: [{ path: '.claude-plugin/marketplace.json', name: 'unknown', status: 'unknown', errors: [] }] }])
+  render(dir)
+  const page = readFileSync(join(dir, 'docs/index.html'), 'utf8')
+  const readme = readFileSync(join(dir, 'README.md'), 'utf8')
+  assert.match(readme, /2\.1\.287; marketplace fails; review UI rewrite/)
+  assert.match(readme, /marketplace not verified/)
+  assert.doesNotMatch(readme, /fails on 2\.1\.287/)
+  assert.match(page, /&lt;market&gt;/)
+  assert.match(page, /Review &lt;text&gt; control strings/)
+  assert.match(page, new RegExp(`blob/${'a'.repeat(40)}/plugins/mod-0/hooks/colour.ts#L12`))
+  assert.match(page, /does not prove those strings reach a text rewrite/)
+  assert.match(readFileSync(join(dir, 'badges/example--mods--mod-0-validates.svg'), 'utf8'), /#bf8700/)
+  const browser = await chromium.launch()
+  t.after(() => browser.close())
+  const tab = await browser.newPage()
+  await tab.route('https://**/*', route => route.abort())
+  await tab.goto(pathToFileURL(join(dir, 'docs/index.html')).href)
+  const row = tab.locator('#example--mods--mod-0')
+  for (const width of [390, 1440]) {
+    await tab.setViewportSize({ width, height: 900 })
+    assert.equal(await row.locator('.compatibility').isVisible(), true)
+    assert.match(await row.locator('.compatibility').innerText(), /marketplace fails; review UI rewrite/)
+    assert.equal(await row.locator('.bad').count(), 0)
+  }
+  await row.locator('summary').click()
+  const source = row.getByRole('link', { name: 'plugins/mod-0/hooks/colour.ts:12' })
+  assert.equal(await source.isVisible(), true)
+  assert.equal(await source.getAttribute('href'), `https://github.com/example/mods/blob/${'a'.repeat(40)}/plugins/mod-0/hooks/colour.ts#L12`)
+  assert.match(await row.locator('dl').innerText(), /Marketplace failed/)
+  assert.match(await row.locator('dl').innerText(), /Validation on 2.1.287\nPassed/)
+})
+
 test('scoreboard stays within desktop and mobile viewports as the scan grows', async t => {
   const browser = await chromium.launch()
   t.after(() => browser.close())
   const page = await browser.newPage()
   await page.route('https://**/*', route => route.abort())
   for (const count of [72, 364, 1000]) {
-    const dir = fixture(t, Array.from({ length: count }, (_, i) => mod(i)))
+    const dir = fixture(t, Array.from({ length: count }, (_, i) => ({ ...mod(i), compatibility: { warnings: [{ message: 'Review control strings in UI source.', evidence: [{ file: 'hooks/colour.ts', line: 12 }] }] } })))
     render(dir)
     await page.goto(pathToFileURL(join(dir, 'docs/index.html')).href)
     for (const width of [320, 390, 768, 1440]) {
@@ -76,6 +114,7 @@ test('scoreboard stays within desktop and mobile viewports as the scan grows', a
       assert.ok(sizes.document <= width, `${count} mods at ${width}px: document is ${sizes.document}px`)
       assert.ok(sizes.contained, `${count} mods at ${width}px: reach segments escape their strip`)
       assert.ok(sizes.equalWidths, `${count} mods at ${width}px: segments have unequal widths`)
+      assert.equal(await page.locator('#t tbody tr').first().locator('.compatibility').isVisible(), true)
     }
     await page.locator('.lv[data-level="3"]').click()
     assert.equal(await page.locator('#t tbody tr:visible').count(), Math.floor(count / 4))

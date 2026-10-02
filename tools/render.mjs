@@ -4,7 +4,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs'
 import { LEVEL_NAMES } from './grade.mjs'
-import { renderSite } from './site.mjs'
+import { renderSite, reviewNotes } from './site.mjs'
 
 const data = JSON.parse(readFileSync('data/mods.json', 'utf8'))
 for (const m of data.mods) m.description = String(m.description ?? '').replace(/\s*[\u2014\u2013]\s*/g, ': ')
@@ -24,6 +24,7 @@ const LEVEL_COLORS = ['#2da44e', '#bf8700', '#e36209', '#8250df']
 const reachText = m => m.reach.labels.length ? m.reach.labels.join(', ') : 'draws only'
 const validates = m => ['passed', 'warnings'].includes(m.validate.status)
 const validationText = m => validates(m) ? data.claudeVersion : m.validate.status === 'failed' ? `fails on ${data.claudeVersion}` : 'not verified'
+const scanText = m => [validationText(m), ...reviewNotes(m)].join('; ')
 
 function badge(label, value, color) {
   const w = s => Math.round(s.length * 6.4 + 12)
@@ -49,7 +50,7 @@ for (const dir of BADGE_DIRS) {
 const writeBadge = (file, svg) => { for (const dir of BADGE_DIRS) writeFileSync(`${dir}/${file}`, svg) }
 for (const m of [...mods, ...builtins]) {
   writeBadge(`${slug(m)}-reach.svg`, badge('reach', `L${m.reach.level} ${reachText(m)}`, LEVEL_COLORS[m.reach.level]))
-  writeBadge(`${slug(m)}-validates.svg`, badge('validates on', validationText(m), validates(m) ? '#2da44e' : '#d1242f'))
+  writeBadge(`${slug(m)}-validates.svg`, badge('validates on', scanText(m), !validates(m) ? '#d1242f' : reviewNotes(m).length ? '#bf8700' : '#2da44e'))
 }
 
 const count = pred => mods.filter(pred).length
@@ -61,7 +62,7 @@ const stats = `As of ${asOf}, scanned against Claude Code ${data.claudeVersion}:
   + `Reach levels: ${[0, 1, 2, 3].map(l => `L${l} ${LEVEL_NAMES[l]}: ${count(m => m.reach.level === l)}`).join(' · ')}.`
   + (catalogs.length ? ` Not counted: ${catalogs.map(c => `[${c.repo}](https://github.com/${c.repo}) repackages ${c.n} mods`).join(', ')}, a catalogue named here once instead of once per copy.` : '')
 
-const row = m => [`[${cell(m.name)}](${manifestUrl(m)})`, cell(short(m.description)), `![reach](badges/${slug(m)}-reach.svg)`, cell(m.sees.join(', ') || 'only what it hooks'), validationText(m), String(m.stars ?? '?')]
+const row = m => [`[${cell(m.name)}](${manifestUrl(m)})`, cell(short(m.description)), `![reach](badges/${slug(m)}-reach.svg)`, cell(m.sees.join(', ') || 'only what it hooks'), scanText(m), String(m.stars ?? '?')]
 // awesome-lint wants aligned pipes and padded cells, so every column is padded to its widest cell.
 function table(rows) {
   const head = ['Mod', 'What it does', 'Reach', 'Sees', 'Validates on', 'Stars']

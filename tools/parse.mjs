@@ -20,9 +20,16 @@ export function parseValidateOutput(text) {
     : /✔ Validation passed/.test(text) ? 'passed'
     : /✘ Validation failed/.test(text) ? 'failed'
     : 'unknown'
-  const errors = [...text.matchAll(/^\s*❯\s+(?!.*(?:hooks|calls|surface modules):)(.+)$/gm)]
-    .map(m => m[1].trim())
-    .filter(line => !line.startsWith('author:'))
+  const errors = []
+  let inErrors = false
+  for (const line of text.split('\n')) {
+    if (/^✘ Found \d+ errors?:/.test(line)) inErrors = true
+    else if (/^(?:⚠|✔|✘|Validating)/.test(line)) inErrors = false
+    else if (inErrors) {
+      const error = line.match(/^\s*❯\s+(.+)$/)
+      if (error && !/^types .+ declares on \$:/.test(error[1])) errors.push(error[1].trim())
+    }
+  }
   return { status, errors, modules: [...modules.values()] }
 }
 
