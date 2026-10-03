@@ -21,7 +21,9 @@ const keys = slugs([...mods, ...builtins])
 const slug = m => keys.get(m)
 const short = (s, n = 110) => { s = String(s ?? '').replace(/\s+/g, ' ').replace(/\s*[\u2014\u2013]\s*/g, ': ').trim(); return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s }
 
-const LEVEL_COLORS = ['#2da44e', '#bf8700', '#e36209', '#8250df']
+// Anthropic palette (olive, clay, deep clay, plum, error red) with ivory text, matching claude.com and claude.dev.
+const LEVEL_COLORS = ['#788c5d', '#c96442', '#a94e2f', '#827dbd']
+const FAIL_COLOR = '#b53333'
 const reachText = m => m.reach.labels.length ? m.reach.labels.join(', ') : 'draws only'
 const validates = m => ['passed', 'warnings'].includes(m.validate.status)
 const validationText = m => validates(m) ? data.claudeVersion : m.validate.status === 'failed' ? `fails on ${data.claudeVersion}` : 'not verified'
@@ -32,8 +34,8 @@ function badge(label, value, color) {
   const lw = w(label), vw = w(value)
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${lw + vw}" height="20" role="img" aria-label="${esc(label)}: ${esc(value)}">
 <title>${esc(label)}: ${esc(value)}</title>
-<rect width="${lw}" height="20" fill="#555"/><rect x="${lw}" width="${vw}" height="20" fill="${color}"/>
-<g fill="#fff" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11" text-anchor="middle">
+<rect width="${lw}" height="20" fill="#5e5d59"/><rect x="${lw}" width="${vw}" height="20" fill="${color}"/>
+<g fill="#faf9f5" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11" text-anchor="middle">
 <text x="${lw / 2}" y="14">${esc(label)}</text><text x="${lw + vw / 2}" y="14">${esc(value)}</text></g></svg>
 `
 }
@@ -51,7 +53,7 @@ for (const dir of BADGE_DIRS) {
 const writeBadge = (file, svg) => { for (const dir of BADGE_DIRS) writeFileSync(`${dir}/${file}`, svg) }
 for (const m of [...mods, ...builtins]) {
   writeBadge(`${slug(m)}-reach.svg`, badge('reach', `L${m.reach.level} ${reachText(m)}`, LEVEL_COLORS[m.reach.level]))
-  writeBadge(`${slug(m)}-validates.svg`, badge('validates on', scanText(m), !validates(m) ? '#d1242f' : reviewNotes(m).length ? '#bf8700' : '#2da44e'))
+  writeBadge(`${slug(m)}-validates.svg`, badge('validates on', scanText(m), !validates(m) ? FAIL_COLOR : reviewNotes(m).length ? LEVEL_COLORS[1] : LEVEL_COLORS[0]))
 }
 
 const count = pred => mods.filter(pred).length
