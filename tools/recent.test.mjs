@@ -288,6 +288,25 @@ test('two fresh checkouts with no merge between them continue from the restored 
   assert.match(third.note, /Carried over from earlier runs: fresh\/mod\./)
 })
 
+test('a full crawl followed by a fresh fast run without a merge keeps both runs\' additions', t => {
+  const codeGh = `
+const fs = require('node:fs'), args = process.argv.slice(2)
+fs.appendFileSync(process.env.GH_LOG, args.join(' ') + '\\n')
+if (args.includes('rate_limit')) console.log(5000)
+else if (args.includes('search/code')) console.log('HTTP/2.0 200 OK\\n\\n' + JSON.stringify({ total_count: 1, incomplete_results: false, items: [{ path: 'hooks/hooks.json', repository: { full_name: 'new/code-found-mod' } }] }))
+else if (args.includes('search/repositories')) console.log('HTTP/2.0 200 OK\\n\\n' + JSON.stringify({ total_count: 0, incomplete_results: false, items: [] }))
+else process.exit(1)
+`
+  const full = cli(t, codeGh, ['--recent', '--keep-on-failure', '--search-pause', '0'])
+  assert.equal(full.run.status, 0, full.run.stderr)
+  assert.deepEqual(JSON.parse(full.state).pending, ['new/code-found-mod'])
+
+  const fast = cli(t, searchGh, ['--skip-code-search', '--recent', '--search-pause', '0'], { env: { SEARCH_ITEMS: JSON.stringify(freshItems) }, restore: full.state })
+  assert.equal(fast.run.status, 0, fast.run.stderr)
+  assert.equal(fast.repos, 'existing/mod\nfresh/mod\nnew/code-found-mod\nseeded/mod\n')
+  assert.deepEqual(JSON.parse(fast.state).pending, ['fresh/mod', 'new/code-found-mod'])
+})
+
 test('a failed repository search still writes the known candidates and keeps the checkpoint', t => {
   const state = { searchedThrough: '2026-10-03T09:00:00Z', checked: {}, deferred: [], pending: [] }
   const { run, repos, note, state: saved } = cli(t, limitedGh, ['--skip-code-search', '--recent'], { state })

@@ -10,7 +10,7 @@
 //   node tools/discover.mjs --skip-code-search      # known candidates and seeds only
 //   node tools/discover.mjs --keep-on-failure       # a failed code search keeps the known candidates instead of failing
 //   node tools/discover.mjs --recent --check-limit 2000  # check more new repos than the default 200
-//   node tools/discover.mjs --recent --search-pause 0     # no pause between repository searches (default 3 seconds)
+//   node tools/discover.mjs --recent --search-pause 0     # no pause between search requests (defaults 10 s for code, 3 s for repositories)
 //   node tools/discover.mjs --note <file>           # write what discovery did, for the scan pull request
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
@@ -110,13 +110,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     since: { type: 'string' },
     restore: { type: 'string' },
     'check-limit': { type: 'string', default: '200' },
-    'search-pause': { type: 'string', default: '3' },
+    'search-pause': { type: 'string' },
     note: { type: 'string' },
   } })
   const limit = Number(args['check-limit'])
   if (!Number.isInteger(limit) || limit < 0) throw new Error(`--check-limit must be a whole number, got ${args['check-limit']}`)
-  const pause = Number(args['search-pause'])
-  if (!(pause >= 0)) throw new Error(`--search-pause must be a number of seconds, got ${args['search-pause']}`)
+  const pause = args['search-pause'] === undefined ? undefined : Number(args['search-pause'])
+  if (pause !== undefined && !(pause >= 0)) throw new Error(`--search-pause must be a number of seconds, got ${args['search-pause']}`)
   const seeds = readRepos('data/seeds.txt')
   const previous = readRepos('data/repos.txt')
   const notes = []
@@ -125,7 +125,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (args['skip-code-search']) notes.push('Code search was skipped; this run covers known candidates and seeds.')
   else {
     try {
-      const request = createSearchRequest()
+      const request = createSearchRequest(pause === undefined ? {} : { pause })
       discovered = QUERIES.flatMap(q => search(q, request))
     } catch (error) {
       if (!args['keep-on-failure']) throw error
@@ -135,14 +135,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
   if (args.recent) {
     const state = args.restore ? mergeState(readState(), readState(args.restore)) : readState()
-    // Repos an earlier run found but main does not list yet stay candidates until a scan PR lands.
+    // Repos an earlier run found, by either search, stay candidates until a scan PR puts them on main.
     const onMain = new Set(mergeRepos(previous, seeds).map(repo => repo.toLowerCase()))
     const carried = state.pending.filter(repo => !onMain.has(repo.toLowerCase()))
     discovered.push(...carried)
     const since = args.since ?? recentSince(state.searchedThrough ?? lastScan())
     const result = findRecent(since, mergeRepos(previous, seeds, discovered), { state, limit, pause, budget: apiBudget(), advance: !args.since })
     discovered.push(...result.found)
-    writeState({ ...result.state, pending: mergeRepos(carried, result.found) })
+    writeState({ ...result.state, pending: mergeRepos(discovered).filter(repo => !onMain.has(repo.toLowerCase())) })
     notes.push(...describeRecent(since, result))
     if (carried.length) notes.push(`Carried over from earlier runs: ${carried.join(', ')}.`)
   }
