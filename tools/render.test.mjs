@@ -83,11 +83,11 @@ test('render preserves failures, distinguishes unknown results and removes exclu
   for (const folder of ['badges', 'docs/badges']) {
     assert.equal(existsSync(join(dir, folder, 'example--mods--mod-4-reach.svg')), false)
     assert.equal(existsSync(join(dir, folder, 'custom.svg')), true)
-    assert.match(readFileSync(join(dir, folder, 'example--mods--mod-1-validates.svg'), 'utf8'), /#2da44e/)
+    assert.match(readFileSync(join(dir, folder, 'example--mods--mod-1-validates.svg'), 'utf8'), /#788c5d/)
     assert.match(readFileSync(join(dir, folder, 'example--mods--mod-2-validates.svg'), 'utf8'), /fails on 2\.1\.287/)
     const unknown = readFileSync(join(dir, folder, 'example--mods--mod-3-validates.svg'), 'utf8')
     assert.match(unknown, /not verified/)
-    assert.doesNotMatch(unknown, /#2da44e/)
+    assert.doesNotMatch(unknown, /#788c5d/)
   }
 })
 
@@ -108,7 +108,7 @@ test('compatibility warnings stay distinct from validation failures and link to 
   assert.match(page, /Review &lt;text&gt; control strings/)
   assert.match(page, new RegExp(`blob/${'a'.repeat(40)}/plugins/mod-0/hooks/colour.ts#L12`))
   assert.match(page, /does not prove those strings reach a text rewrite/)
-  assert.match(readFileSync(join(dir, 'badges/example--mods--mod-0-validates.svg'), 'utf8'), /#bf8700/)
+  assert.match(readFileSync(join(dir, 'badges/example--mods--mod-0-validates.svg'), 'utf8'), /#c96442/)
   const browser = await chromium.launch()
   t.after(() => browser.close())
   const tab = await browser.newPage()
