@@ -12,3 +12,4 @@ jarrodwatts/intermission
 hellosverre/claude-skins
 augiefra/claude-mods
 nuromirzak/nibbl
+augbastos/afkswitch
