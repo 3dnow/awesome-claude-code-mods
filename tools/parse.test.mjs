@@ -2,6 +2,10 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { parseValidateOutput, parseHooks, parseCalls } from './parse.mjs'
 import { grade, visibility, drawsOn } from './grade.mjs'
+import { validate, relativePaths } from './validate.mjs'
+import { mkdtempSync, mkdirSync, writeFileSync, chmodSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 const SAMPLE = `Validating plugin manifest: /x/.claude-plugin/plugin.json
 
@@ -168,4 +172,23 @@ test('a scan that lost most of its mods or repos is partial, a small dip is not'
   assert.equal(looksPartial(many, { repos: 88, mods: many.mods.slice(0, 27) }), null)
   assert.match(looksPartial(many, { repos: 30, mods: many.mods }), /30 candidate repos where the committed scan has 90/)
   assert.equal(looksPartial({ repos: 0, mods: [] }, few), null)
+})
+
+test('validator errors keep paths relative to the scanned repository', t => {
+  const root = mkdtempSync(join(tmpdir(), 'validate-paths-'))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  const checkout = join(root, 'clones', 'owner__repo')
+  mkdirSync(join(root, 'bin'), { recursive: true })
+  mkdirSync(checkout, { recursive: true })
+  writeFileSync(join(root, 'bin', 'claude'), '#!' + process.execPath + `\nconsole.log('✘ Found 1 error:\\n  ❯ modules../register.ts: demo: ${checkout}/plugins/demo/hooks/register.ts: no such file (from ${join(root, 'clones')}/other__repo/x.ts)\\n\\n✘ Validation failed')\nprocess.exit(1)\n`)
+  chmodSync(join(root, 'bin', 'claude'), 0o755)
+  const path = process.env.PATH
+  process.env.PATH = join(root, 'bin') + ':' + path
+  t.after(() => { process.env.PATH = path })
+  const result = validate('.', checkout, [checkout, join(root, 'clones')])
+  assert.equal(result.status, 'failed')
+  assert.ok(result.errors.length > 0)
+  for (const error of result.errors) assert.ok(!error.includes(root), error)
+  assert.match(result.errors.join('\n'), /plugins\/demo\/hooks\/register\.ts: no such file \(from other__repo\/x\.ts\)/)
+  assert.equal(relativePaths('/tmp/c/owner__repo', ['/tmp/c/owner__repo']), '.')
 })

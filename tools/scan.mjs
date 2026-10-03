@@ -77,6 +77,8 @@ for (const repo of repos) {
   const dir = clone(repo)
   if (!dir) continue
   const revision = execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
+  // Longest first: the checkout itself, then the clones folder, both as given and as resolved.
+  const roots = [dir, join(CLONES, repo.replace('/', '__')), realpathSync(CLONES), CLONES]
   let complete = true
   const m = metas.get(repo.toLowerCase()) ?? meta(repo)
   for (const hooksPath of hooksFiles(dir)) {
@@ -94,7 +96,7 @@ for (const repo of repos) {
     const id = `${repo}:${rel}`
     if (seen.has(id)) continue
     seen.add(id)
-    const parsed = validate(existsSync(manifestPath) ? '.claude-plugin/plugin.json' : '.', root)
+    const parsed = validate(existsSync(manifestPath) ? '.claude-plugin/plugin.json' : '.', root, roots)
     const allHooks = parsed.modules.flatMap(x => x.hooks)
     const allCalls = [...new Set(parsed.modules.flatMap(x => x.calls))].sort()
     const reach = grade(allCalls)
@@ -103,7 +105,7 @@ for (const repo of repos) {
     seen.add(dupKey)
     const marketplaces = marketplacesFor(dir, root).map(path => {
       if (!marketplaceResults.has(path)) {
-        const result = validate(path, dir)
+        const result = validate(path, dir, roots)
         marketplaceResults.set(path, { path: relative(dir, path), name: readJson(path)?.name ?? null, status: result.status, errors: result.errors })
       }
       return marketplaceResults.get(path)
