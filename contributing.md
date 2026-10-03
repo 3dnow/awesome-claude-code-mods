@@ -21,11 +21,11 @@ PR checks scan submitted seeds alongside the committed candidates. A newly added
 
 Missing plugins stay listed as unverified during daily scans. Weekly retirement proposals require a fresh successful checkout and record the revision used to establish that a hook module is gone. Clone failures and failed validation are not removal evidence. Curated descriptions need a separate human review when an upstream project changes.
 
-Do not edit anything between `<!-- scan:start -->` and `<!-- scan:end -->`, `<!-- builtin:start -->` and `<!-- builtin:end -->`, or `<!-- stats:start -->` and `<!-- stats:end -->`. The scanner regenerates those blocks and would overwrite your change.
+The count in `README.md` and the statistics and tables in [catalogue.md](catalogue.md) are generated. Do not edit anything between `<!-- scan:start -->` and `<!-- scan:end -->`, `<!-- builtin:start -->` and `<!-- builtin:end -->`, or `<!-- stats:start -->` and `<!-- stats:end -->`. The renderer would overwrite your change.
 
 ## What gets a curated entry
 
-The generated table lists every mod the scanner can validate. The curated sections above it list mods that a person would install: a README that explains what it does, an install path that works, and a footprint that matches the description. A game that hooks every tool call to feed a pet is fine. A game that calls `$.http.fetch` without saying why is not.
+The generated catalogue lists discovered mods, including failed and unverified results. The curated sections in the README list mods that a person would install: a README that explains what it does, an install path that works, and a footprint that matches the description. A game that hooks every tool call to feed a pet is fine. A game that calls `$.http.fetch` without saying why is not.
 
 ## Badges
 
@@ -54,7 +54,7 @@ npm run lint        # awesome-lint on README.md
 npm run discover    # refresh data/repos.txt (needs gh logged in)
 npm run scan        # clone, validate, write data/mods.json (needs the claude CLI)
 npm run scan -- --retire  # weekly removal audit; writes revision evidence for review
-npm run render      # regenerate README blocks, badges/, docs/ and docs/badges/
+npm run render      # regenerate README count, catalogue.md, badges/ and docs/
 node tools/changed.mjs   # exit 0 if the scan differs from HEAD on anything but stars and timestamps
 ```
 
@@ -62,7 +62,7 @@ node tools/changed.mjs   # exit 0 if the scan differs from HEAD on anything but 
 
 The landing page is generated from `data/mods.json`. Edit `tools/site.mjs`, `tools/site.css` or `tools/site-client.js`, then run `npm run render`. Do not edit `docs/index.html` directly.
 
-The daily scan runs this renderer and includes the updated README, landing page and public JSON in the same automated scan pull request. Merging that pull request publishes the collection through GitHub Pages. No separate website edit or pull request is needed for new scanned mods.
+The daily scan runs this renderer and includes the updated README count, catalogue, landing page and public JSON in the same automated scan pull request. Merging that pull request publishes the collection through GitHub Pages. No separate website edit or pull request is needed for new scanned mods.
 
 Search, filtering and sorting run in the browser; the full collection remains readable without JavaScript. Search stays above the results while browsing. The page follows the system's light or dark appearance through `prefers-color-scheme`.
 

@@ -20,11 +20,33 @@ function fixture(t, mods) {
   t.after(() => rmSync(dir, { recursive: true, force: true }))
   mkdirSync(join(dir, 'data'))
   writeFileSync(join(dir, 'data/mods.json'), JSON.stringify({ generated: '2026-01-01T00:00:00Z', claudeVersion: '2.1.287', repos: 1, mods }))
-  writeFileSync(join(dir, 'README.md'), ['stats', 'scan', 'builtin'].map(name => `<!-- ${name}:start -->\n<!-- ${name}:end -->`).join('\n'))
+  writeFileSync(join(dir, 'README.md'), 'Curated picks stay here.\n<!-- stats:start -->\n<!-- stats:end -->\n')
+  writeFileSync(join(dir, 'catalogue.md'), ['stats', 'scan', 'builtin'].map(name => `<!-- ${name}:start -->\n<!-- ${name}:end -->`).join('\n'))
   return dir
 }
 
 const render = dir => execFileSync(process.execPath, [renderer], { cwd: dir, stdio: 'pipe' })
+
+test('repeat scans refresh the README count and catalogue without duplicating tables', t => {
+  const dir = fixture(t, [mod(0)])
+  render(dir)
+  const data = JSON.parse(readFileSync(join(dir, 'data/mods.json'), 'utf8'))
+  data.generated = '2026-02-02T00:00:00Z'
+  data.mods.push(mod(1), mod(2, 'passed', 'builtin'))
+  writeFileSync(join(dir, 'data/mods.json'), JSON.stringify(data))
+  render(dir)
+  const readme = readFileSync(join(dir, 'README.md'), 'utf8')
+  const catalogue = readFileSync(join(dir, 'catalogue.md'), 'utf8')
+  assert.match(readme, /Curated picks stay here/)
+  assert.match(readme, /\*\*2 mods\*\*.*2026-02-02/)
+  assert.doesNotMatch(readme, /mod-0|mod-1|mod-2/)
+  assert.match(catalogue, /\*\*2 mods\*\*/)
+  assert.equal((catalogue.match(/\[mod-1\]/g) ?? []).length, 1)
+  assert.match(catalogue, /<!-- builtin:start -->[\s\S]*\[mod-2\]/)
+  render(dir)
+  assert.equal(readFileSync(join(dir, 'README.md'), 'utf8'), readme)
+  assert.equal(readFileSync(join(dir, 'catalogue.md'), 'utf8'), catalogue)
+})
 
 test('render preserves failures, distinguishes unknown results and removes excluded badges', t => {
   const dir = fixture(t, [mod(0), mod(1, 'warnings'), mod(2, 'failed'), mod(3, 'unknown'), mod(4, 'passed', 'fixture')])
@@ -35,11 +57,13 @@ test('render preserves failures, distinguishes unknown results and removes exclu
   }
   render(dir)
   const readme = readFileSync(join(dir, 'README.md'), 'utf8')
+  const catalogue = readFileSync(join(dir, 'catalogue.md'), 'utf8')
   const page = readFileSync(join(dir, 'docs/index.html'), 'utf8')
   assert.match(readme, /\*\*4 mods\*\*/)
-  assert.match(readme, /fails on 2\.1\.287/)
-  assert.match(readme, /not verified/)
-  assert.doesNotMatch(readme, /mod-4/)
+  assert.match(catalogue, /fails on 2\.1\.287/)
+  assert.match(catalogue, /not verified/)
+  assert.doesNotMatch(catalogue, /mod-4/)
+  assert.doesNotMatch(readme, /mod-0|fails on|run host processes/)
   assert.match(page, /Plugin name is reserved/)
   assert.match(page, /not a runtime compatibility test/)
   for (const folder of ['badges', 'docs/badges']) {
@@ -62,10 +86,10 @@ test('compatibility warnings stay distinct from validation failures and link to 
   const dir = fixture(t, [reviewed, { ...mod(1), marketplaces: [{ path: '.claude-plugin/marketplace.json', name: 'unknown', status: 'unknown', errors: [] }] }])
   render(dir)
   const page = readFileSync(join(dir, 'docs/index.html'), 'utf8')
-  const readme = readFileSync(join(dir, 'README.md'), 'utf8')
-  assert.match(readme, /2\.1\.287; marketplace fails; review UI rewrite/)
-  assert.match(readme, /marketplace not verified/)
-  assert.doesNotMatch(readme, /fails on 2\.1\.287/)
+  const catalogue = readFileSync(join(dir, 'catalogue.md'), 'utf8')
+  assert.match(catalogue, /2\.1\.287; marketplace fails; review UI rewrite/)
+  assert.match(catalogue, /marketplace not verified/)
+  assert.doesNotMatch(catalogue, /fails on 2\.1\.287/)
   assert.match(page, /&lt;market&gt;/)
   assert.match(page, /Review &lt;text&gt; control strings/)
   assert.match(page, new RegExp(`blob/${'a'.repeat(40)}/plugins/mod-0/hooks/colour.ts#L12`))
