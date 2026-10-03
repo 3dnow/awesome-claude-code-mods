@@ -16,9 +16,9 @@ This collection automatically discovers public mod repositories and shows what C
 
 A six-second recording with [terminal-browser by zenbu-labs](https://github.com/zenbu-labs/terminal-browser). [Download the full-resolution video](assets/terminal-browser-demo.mp4?raw=1).
 
-The scanner reports network access, host processes and prompt changes for this mod.
+Access reported by the latest scan (select the badge for details):
 
-[![Terminal-browser access: L3 network, runs processes, drives Claude, writes the prompt box, reads files and draws](badges/zenbu-labs--terminal-browser--terminal-browser-reach.svg)](https://mods.aidojo.si/#zenbu-labs--terminal-browser--terminal-browser)
+[![Terminal-browser access reported by the scanner](badges/zenbu-labs--terminal-browser--terminal-browser-reach.svg)](https://mods.aidojo.si/#zenbu-labs--terminal-browser--terminal-browser)
 
 ## Contents
 
