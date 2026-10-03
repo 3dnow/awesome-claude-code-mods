@@ -25,6 +25,8 @@ for attempt in {1..8}; do
   git fetch origin main
   base=$(git rev-parse origin/main)
   git switch -C "$branch" "$base"
+  # awesome-lint resolves GitHub from the current branch's configured remote.
+  git branch --set-upstream-to=origin/main "$branch"
   node tools/seed-publication.mjs --repos "$RUNNER_TEMP/seeds.txt" --scan "$RUNNER_TEMP/seed-scan.json" --result "$RUNNER_TEMP/seed-result.txt" --skipped "$skipped"
   if [ "$(cat "$RUNNER_TEMP/seed-result.txt")" = unchanged ]; then
     pr=$(gh pr list --head "$branch" --base main --state open --json number --jq '.[0].number // empty')

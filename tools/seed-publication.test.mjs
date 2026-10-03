@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -12,7 +12,7 @@ const mod = (repo, name = 'mod', extra = {}) => ({
   validate: { status: 'passed', claudeVersion: '2.1.287', errors: [] },
   marketplaces: [], compatibility: { warnings: [] }, ...extra,
 })
-const inventory = mods => ({ generated: '2026-01-01T00:00:00Z', claudeVersion: '2.1.287', repos: 1, mods })
+const inventory = mods => ({ generated: '2026-01-01T00:00:00Z', claudeVersion: '2.1.287', repos: 1, mods, checkedRepos: [...new Set(mods.map(m => m.repo.toLowerCase()))] })
 const before = () => inventory([mod('existing/repo')])
 const scan = () => inventory([mod('new/repo', 'one'), mod('new/repo', 'two')])
 const append = (current = scan(), prior = before(), duplicates) => appendSeeds(prior, current, ['new/repo'], ['existing/repo'], duplicates)
@@ -78,6 +78,64 @@ test('one failing seed does not hold back the others', () => {
 test('warnings and fixtures are retained when the seed includes valid counted mods', () => {
   const current = inventory([mod('new/repo', 'real', { validate: { status: 'warnings', claudeVersion: '2.1.287' } }), mod('new/repo', 'probe', { kind: 'fixture' })])
   assert.equal(append(current).inventory.mods.length, 3)
+})
+
+test('publication requires evidence that each repository was fully inspected', () => {
+  for (const checkedRepos of [undefined, []]) {
+    skippedFor(append({ ...scan(), checkedRepos }), /not fully inspected/)
+  }
+})
+
+test('a seed casing change during a scan cannot trap duplicate removal in a loop', () => {
+  const module = new URL('./seed-publication.mjs', import.meta.url).href
+  const probe = `
+    import { planPublication } from ${JSON.stringify(module)};
+    const mod = ${mod.toString()};
+    const inventory = ${inventory.toString()};
+    const result = planPublication(inventory([mod('same/one')]), inventory([mod('same/Three'), mod('other/repo')]), ['same/Three', 'other/repo'], ['same/three', 'other/repo'], []);
+    console.log(JSON.stringify(result));
+  `
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', probe], { encoding: 'utf8', timeout: 5000 })
+  assert.ifError(result.error)
+  assert.equal(result.status, 0, result.stderr)
+  const published = JSON.parse(result.stdout)
+  assert.deepEqual(published.published, ['other/repo'])
+  assert.equal(published.skipped.length, 1)
+  assert.match(published.skipped[0].reason, /possible duplicate/)
+})
+
+test('scanner reports partial repositories so passing siblings can publish alone', t => {
+  const root = mkdtempSync(join(tmpdir(), 'seed-inspection-'))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  mkdirSync(join(root, 'data'))
+  mkdirSync(join(root, 'bin'))
+  writeFileSync(join(root, 'data/seeds.txt'), 'owner/partial\nother/good\n')
+  const binary = (name, code) => writeFileSync(join(root, 'bin', name), `#!${process.execPath}\n${code}`, { mode: 0o755 })
+  binary('claude', `console.log(process.argv.includes('--version') ? '2.1.287' : '✔ Validation passed')`)
+  binary('gh', `console.log(JSON.stringify({stars: 0, defaultBranch: 'main'}))`)
+  binary('git', `
+    const fs = require('node:fs'), path = require('node:path');
+    if (process.argv[2] === 'clone') {
+      const dir = process.argv.at(-1);
+      const plugins = process.argv.at(-2).endsWith('/partial') ? ['good', 'broken'] : ['good'];
+      for (const name of plugins) {
+        fs.mkdirSync(path.join(dir, name, 'hooks'), {recursive: true});
+        fs.mkdirSync(path.join(dir, name, '.claude-plugin'), {recursive: true});
+        fs.writeFileSync(path.join(dir, name, '.claude-plugin/plugin.json'), JSON.stringify({name}));
+        fs.writeFileSync(path.join(dir, name, 'hooks/hooks.json'), name === 'broken' ? '{' : JSON.stringify({modules: ['mod.js']}));
+      }
+    } else console.log('a'.repeat(40));
+  `)
+  const env = { ...process.env, PATH: join(root, 'bin') + ':' + process.env.PATH }
+  const script = fileURLToPath(new URL('./scan.mjs', import.meta.url))
+  execFileSync(process.execPath, [script, '--repos', 'data/seeds.txt', '--include-checked', '--out', 'scan.json'], { cwd: root, env, stdio: 'pipe' })
+  const scanned = JSON.parse(readFileSync(join(root, 'scan.json'), 'utf8'))
+  assert.deepEqual(scanned.checkedRepos, ['other/good'])
+  const result = appendSeeds(before(), scanned, ['owner/partial', 'other/good'], ['existing/repo'])
+  assert.deepEqual(result.published, ['other/good'])
+  assert.deepEqual(result.inventory.mods.map(m => m.repo), ['existing/repo', 'other/good'])
+  assert.deepEqual(result.skipped.map(s => s.repo), ['owner/partial'])
+  assert.match(result.skipped[0].reason, /not fully inspected/)
 })
 
 test('only duplicate suspicions involving new entries keep a seed unpublished', () => {
@@ -150,7 +208,10 @@ for (const concurrentPublication of [false, true]) test(`publication handles a c
   writeFileSync(join(runner, 'seed-scan.json'), JSON.stringify(inventory([renderable('new/repo', 'new')])))
   const log = join(root, 'commands.jsonl'), marker = join(root, 'advanced'), pr = join(root, 'pr')
   const prelude = `#!${process.execPath}\nconst fs=require('node:fs'),cp=require('node:child_process');const args=process.argv.slice(2);fs.appendFileSync(${JSON.stringify(log)},JSON.stringify([require('node:path').basename(process.argv[1]),...args])+'\\n');const git=(...a)=>cp.execFileSync('git',a,{encoding:'utf8'}).trim();\n`
-  writeFileSync(join(bin, 'npm'), prelude + `if(args.join(' ')==='run render')cp.execFileSync(process.execPath,['tools/render.mjs'],{stdio:'pipe'});`, { mode: 0o755 })
+  writeFileSync(join(bin, 'npm'), prelude + `
+if(args.join(' ')==='run render')cp.execFileSync(process.execPath,['tools/render.mjs'],{stdio:'pipe'});
+if(args.join(' ')==='run lint')git('rev-parse','--abbrev-ref','@{upstream}');
+`, { mode: 0o755 })
   writeFileSync(join(bin, 'gh'), prelude + `
 if(args[0]==='api'){
   if(!fs.existsSync(${JSON.stringify(marker)})){

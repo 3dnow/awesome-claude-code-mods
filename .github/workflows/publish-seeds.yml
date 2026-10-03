@@ -46,7 +46,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          node tools/scan.mjs --repos "$RUNNER_TEMP/seeds.txt" --out "$RUNNER_TEMP/seed-scan.json"
+          node tools/scan.mjs --repos "$RUNNER_TEMP/seeds.txt" --include-checked --out "$RUNNER_TEMP/seed-scan.json"
       - name: Install browser checks
         if: steps.seeds.outputs.pending == 'true'
         run: npx playwright install --with-deps chromium

@@ -40,9 +40,12 @@ export function appendSeeds(before, scanned, seeds, candidates, duplicates = new
     ids.add(mod.id)
   }
   const publishedIds = new Set(before.mods.map(mod => mod.id))
+  const checked = new Set((scanned.checkedRepos ?? []).map(key))
   const skipped = []
   let accepted = wanted.filter(repo => {
-    const reason = reviewSeed(scanned.mods.filter(mod => key(mod.repo) === key(repo)), before.claudeVersion, publishedIds)
+    const records = scanned.mods.filter(mod => key(mod.repo) === key(repo))
+    const reason = reviewSeed(records, before.claudeVersion, publishedIds)
+      ?? (checked.has(key(repo)) ? null : 'repository was not fully inspected; retry or repair malformed hooks')
     if (reason) skipped.push({ repo, reason })
     return !reason
   })
@@ -64,7 +67,11 @@ export function appendSeeds(before, scanned, seeds, candidates, duplicates = new
       if (!repo || !acceptedKeys.has(key(repo))) throw new Error('Seed changes an existing duplicate decision; manual review required')
       skipped.push({ repo, reason })
     }
-    if (drop.size) { accepted = accepted.filter(repo => !drop.has(repo)); continue }
+    if (drop.size) {
+      const droppedKeys = new Set([...drop.keys()].map(key))
+      accepted = accepted.filter(repo => !droppedKeys.has(key(repo)))
+      continue
+    }
     if (!accepted.length) return { inventory: null, repos: null, published: [], skipped }
     const repos = mergeRepos(candidates, accepted)
     // Keep the full-scan timestamp: existing entries were not rescanned.
