@@ -1,4 +1,10 @@
-# Awesome Claude Code Mods [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme-title-dark.svg">
+    <img src="assets/readme-title-light.svg" alt="Awesome Claude Code Mods" width="620">
+  </picture>
+  <a href="https://awesome.re"><img src="https://awesome.re/badge.svg" alt="Awesome"></a>
+</h1>
 
 > Discover Claude Code mods and see what each one can access.
 
