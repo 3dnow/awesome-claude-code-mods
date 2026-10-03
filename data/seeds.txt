@@ -20,3 +20,4 @@ hoobnn/hoobnn-agent-mods
 xuanji86/claude-statuspane
 xuanji86/claude-agentpane
 shimo4228/harness-scope
+helenkwok/gsd-status-mod
