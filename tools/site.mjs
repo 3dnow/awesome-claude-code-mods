@@ -50,13 +50,12 @@ export function renderSite(data) {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Awesome Claude Code Mods | Make Claude Code your own</title>
-<meta name="description" content="${esc(description)}"><meta name="theme-color" content="#f3f3ee" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#111113" media="(prefers-color-scheme: dark)">
+<meta name="description" content="${esc(description)}"><meta name="theme-color" content="#f0eee6" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#1c1c1a" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="https://mods.aidojo.si/"><link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website"><meta property="og:title" content="Awesome Claude Code Mods"><meta property="og:description" content="${esc(description)}"><meta property="og:url" content="https://mods.aidojo.si/">
 <meta property="og:image" content="https://mods.aidojo.si/social-preview.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Awesome Claude Code Mods. Make Claude Code your own.">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="./fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="./fonts/source-serif-4-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>${css}</style></head><body>
 <a class="skip" href="#directory">Skip to the mod directory</a>
 <div class="mast"><header class="shell"><a href="./" class="brand" aria-label="Claude Mods home">${mark}<span>claude<span class="brand-light">mods</span></span></a><nav aria-label="Main navigation"><a href="#directory">The collection</a><a href="#about">About mods</a><a class="github-link" href="${repo}" aria-label="Star the Claude Code mods list on GitHub">${star}Star on GitHub</a></nav></header>
