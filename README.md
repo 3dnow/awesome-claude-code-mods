@@ -6,7 +6,7 @@ Add a browser beside your conversation, keep usage in view, or check a command b
 
 This collection automatically discovers public mod repositories and shows what Claude's validator says each mod can read, write or run.
 
-**[Browse all mods](https://mods.aidojo.si/)** · [Full catalogue on GitHub](catalogue.md) · [Submit a mod](contributing.md)
+[![Browse all mods](assets/browse-mods.svg)](https://mods.aidojo.si/)
 
 <!-- stats:start -->
 **359 mods** · Last scanned 2026-10-02.
