@@ -53,7 +53,7 @@ export function renderSite(data) {
 <meta name="description" content="${esc(description)}"><meta name="theme-color" content="#f0eee6" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#1c1c1a" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="https://mods.aidojo.si/"><link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website"><meta property="og:title" content="Awesome Claude Code Mods"><meta property="og:description" content="${esc(description)}"><meta property="og:url" content="https://mods.aidojo.si/">
-<meta property="og:image" content="https://mods.aidojo.si/social-preview.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Awesome Claude Code Mods. Make Claude Code your own.">
+<meta property="og:image" content="https://mods.aidojo.si/social-preview.png?v=2"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Awesome Claude Code Mods. Make Claude Code your own.">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="./fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>${css}</style></head><body>
