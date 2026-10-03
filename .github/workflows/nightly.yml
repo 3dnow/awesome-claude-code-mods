@@ -1,15 +1,10 @@
 name: nightly scan
 
-# The 22:30 run is the full GitHub code search. The three-hourly runs and pushes that change
-# seeds skip it. They rescan known candidates and seeds, plus repositories pushed since the
-# last scan that repository search finds, so a new mod does not wait for the crawl.
+# Seed additions publish separately without waiting for the full catalogue scan.
 on:
   schedule:
     - cron: "30 22 * * *"
     - cron: "0 1-19/3 * * *"
-  push:
-    branches: [main]
-    paths: ["data/seeds.txt"]
   workflow_dispatch:
     inputs:
       force:
@@ -21,7 +16,7 @@ on:
         type: boolean
         default: false
   pull_request:
-    paths: ["tools/**", "data/seeds.txt", "package.json", "package-lock.json", ".github/workflows/nightly.yml", ".github/workflows/weekly-retirement.yml"]
+    paths: ["tools/**", "data/seeds.txt", "package.json", "package-lock.json", ".github/workflows/nightly.yml", ".github/workflows/weekly-retirement.yml", ".github/workflows/publish-seeds.yml"]
 
 permissions:
   contents: write
