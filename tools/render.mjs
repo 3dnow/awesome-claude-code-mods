@@ -4,7 +4,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs'
 import { LEVEL_NAMES } from './grade.mjs'
-import { renderSite, reviewNotes } from './site.mjs'
+import { renderSite, renderSitemap, renderRobots, renderLlms, reviewNotes } from './site.mjs'
 import { slugs } from './slug.mjs'
 
 const data = JSON.parse(readFileSync('data/mods.json', 'utf8'))
@@ -91,4 +91,7 @@ const site = renderSite(data)
 mkdirSync('docs', { recursive: true })
 writeFileSync('docs/index.html', site)
 writeFileSync('docs/mods.json', JSON.stringify(data, null, 2) + '\n')
+writeFileSync('docs/sitemap.xml', renderSitemap(data))
+writeFileSync('docs/robots.txt', renderRobots())
+writeFileSync('docs/llms.txt', renderLlms(data))
 console.log(`rendered ${mods.length} mods and ${builtins.length} built-ins into README.md, catalogue.md, badges/, docs/ and docs/badges/`)

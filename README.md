@@ -1,6 +1,6 @@
 # Awesome Claude Code Mods [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
 
-A community list of Claude Code mods (function hooks) for **Claude Code 2.1.287+**. A mod is a plugin that uses TypeScript functions to change Claude Code's interface or behavior. [Browse the catalogue](https://mods.aidojo.si/).
+A community list of Claude Code mods (function hooks) for **Claude Code 2.1.287+**. A mod is a plugin that uses JavaScript or TypeScript functions to change Claude Code's interface or behavior. [Browse the catalogue](https://mods.aidojo.si/).
 
 Add a browser beside your conversation, keep usage in view, or check a command before it runs. Install a community mod or [ask Claude to build one](https://claude.dev/blog/getting-started-with-claude-code-mods/#the-shortcut-let-claude-build-it).
 

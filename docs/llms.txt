@@ -1,0 +1,51 @@
+# Awesome Claude Code Mods
+
+> A community list of 1017 Claude Code mods (function hooks), scanned from public GitHub repositories with what each mod can read, write, run or send over the network. An independent scan, not an official Anthropic directory. Last scanned 2026-10-03 on Claude Code 2.1.288.
+
+Mods are Claude Code plugins whose JavaScript or TypeScript hooks run inside a session. They need Claude Code 2.1.287 or later and are on by default. Each entry records the hooks and API calls reported by `claude plugin validate`. Access levels describe the widest reach of those calls and are not safety ratings. Mods per level: L0 Draws & remembers: 112, L1 Reads files: 220, L2 Writes or runs: 518, L3 Uses the network: 167.
+
+## Catalogue
+
+- [Browse the mods](https://mods.aidojo.si/): searchable directory with access and validation details for every mod
+- [mods.json](https://mods.aidojo.si/mods.json): every mod with its hooks, API calls, access level, stars and validation result
+- [catalogue.md](https://github.com/karanb192/awesome-claude-code-mods/blob/main/catalogue.md): the same catalogue as Markdown tables
+- [README](https://github.com/karanb192/awesome-claude-code-mods#readme): curated picks by category, how to use mods, how the scan works
+
+## Most starred mods
+
+- [ruview-live](https://github.com/ruvnet/RuView/tree/main/harness/ruview/mod): RuView live sensing in Claude Code: /ruview opens a pane beside the transcript with three views: an overview of your CSI nodes (ESP32, Realtek) and 60 GHz rada…
+- [ruflo-console](https://github.com/ruvnet/ruflo/tree/main/plugins/ruflo-console): ruflo's cockpit inside Claude Code and the one /ruflo command for every ruflo mod (function hooks, early access). Views: overview with health alerts, swarm top…
+- [ruflo-mods](https://github.com/ruvnet/ruflo/tree/main/plugins/ruflo-mods): ruflo as a Claude Code mod (function hooks, ADR-404): in-process prompt routing, edit learning signals, tighten-only tool checks from ruflo policy, the cost-tr…
+- [ruflo-ruos](https://github.com/ruvnet/ruflo/tree/main/plugins/ruflo-ruos): Run ruflo swarm agents on your own ruOS cloud desktops via the tenant-authenticated fleet MCP or per-tenant SSH; optional and removable (ADR-405)
+- [ruflo-swarm](https://github.com/ruvnet/ruflo/tree/main/plugins/ruflo-swarm): Agent teams, swarm coordination, Monitor streams, and worktree isolation: wraps 4 swarm_* + 8 agent_* MCP tools (12 total) plus 6 topologies (hierarchical / me…
+- [code-modernization](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/code-modernization): Guided modernization for any legacy codebase: start with /modernize, get an assessment, an interactive map, the business rules mined from the code, and a plan…
+- [fm](https://github.com/kunchenguid/firstmate/tree/main/.claude/mods/firstmate-calm): Firstmate Calm for Claude Code: the sailboat working animation and conversation-only transcript presentation, sharing the per-home config/calm preference with…
+- [fast-jev-compaction](https://github.com/tamaratran/fast-jev-compaction): Verbatim Jev-guided compaction for Claude Code sessions.
+- [terminal-browser](https://github.com/zenbu-labs/terminal-browser/tree/main/claude-code-plugin): A browser running directly inside claude code. Preview websites, view HTML documents, and let your agent control the built in browser.
+- [caliber-jev-compaction](https://github.com/caliber-ai-org/ai-setup/tree/master/plugin/caliber-jev-compaction): Verbatim Jev-guided compaction for Claude Code sessions.
+- [claude-council](https://github.com/hex/claude-council): Consult multiple AI coding agents (Gemini, OpenAI, Grok, Perplexity, Kimi, any model OpenRouter routes to, plus codex, antigravity, grok, kimi and cursor CLIs…
+- [storybloq](https://github.com/Storybloq/storybloq/tree/main/plugins/storybloq): Project memory for Claude Code and Codex. Storybloq stores tickets, issues, handovers, and lessons in a .story/ folder inside your repo.
+- [jev-auto-compact](https://github.com/notque/vexjoy-agent/tree/main/plugins/jev-auto-compact): Jev-powered verbatim compaction: once context reaches 60%, prunes stale tool calls with zero generation. Skips (never falls back to the LLM summarizer) when no…
+- [lesson-cards](https://github.com/yonatangross/orchestkit/tree/main/mods/lesson-cards): Displays lesson hint cards when tool calls match known patterns. Additive surface during pilot; the classic --strict guard keeps its 12 block-severity denies.
+- [memory-lens](https://github.com/yonatangross/orchestkit/tree/main/mods/memory-lens): Recalls the few memories related to each prompt: one line for the human, one context entry for the model. Local files only, no network on the hot path.
+- [promote-lights](https://github.com/yonatangross/orchestkit/tree/main/mods/promote-lights): Shows CI status lights above the prompt while a promote PR (base main) is open. One REST page per minute, PR-open only. Cancelled is not-pass.
+- [secrets-veil](https://github.com/yonatangross/orchestkit/tree/main/mods/secrets-veil): Masks secret values in tool results before the model reads them: named vendor variables, value-shape patterns, and high-entropy tokens. No reveal path.
+- [compact-adviser](https://github.com/kunchenguid/compact-adviser/tree/main/packages/claude-mod): Suggests (or, opt-in, runs) /compact at a completed checkpoint, judged by TypeSafe Jev. Its hooks module activates only when CLAUDE_CODE_ENABLE_FUNCTION_HOOKS…
+- [multi-core](https://github.com/greenpolo/cc-multi-cli-plugin/tree/main/plugins/multi-core): Claude Code plugin: use ChatGPT (Codex), Cursor, OpenCode Zen, and Antigravity models inside one Claude Code session. Switch with /model, delegate to named nat…
+- [shunt](https://github.com/pleaseai/shunt/tree/main/plugins/shunt): A Claude Mod for the shunt gateway: /shunt:usage reads the shared account pool's remaining headroom and reset times from shunt's GET /usage, so you can see how…
+- [fast-jev-output](https://github.com/tamaratran/jev-pruner): Trim long Bash output with Jev before the model sees it (Claude Code plugin)
+- [jev-eval-observer](https://github.com/tamaratran/jev-pruner/tree/main/evals/observer): Pass-through evaluation instrumentation; never changes tool results.
+- [lane-stack](https://github.com/VKirill/claude-lane-stack/tree/main/plugins/lane-stack): Solo PM conveyor for Claude Code: orchestrator agents, lane playbooks, onboard and resume commands.
+- [winnow](https://github.com/GhalebDweikat/winnow): A calibrated context sieve for Claude Code. Every large tool result is judged by a System One model before it enters context; irrelevant blocks are replaced wi…
+- [genesis-web-override](https://github.com/WingedGuardian/GENesis-AGI/tree/main/plugins/genesis-web-override): Answers Claude Code's built-in WebSearch with Genesis's web_search chain, falling back to the built-in on any failure. Needs CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=…
+
+## Official documentation
+
+- [Mods overview](https://code.claude.com/docs/en/plugins/mods/overview): what a mod is, how to install one, what it can reach
+- [Create a mod](https://code.claude.com/docs/en/plugins/mods/create): ask Claude for a mod or write one
+- [Mods reference](https://code.claude.com/docs/en/plugins/mods/reference): events, API methods, elements and limits
+
+## Optional
+
+- [Contributing](https://github.com/karanb192/awesome-claude-code-mods/blob/main/contributing.md): how to submit a mod
+- [How the scan works](https://github.com/karanb192/awesome-claude-code-mods#how-the-scan-works): discovery, validation and grading
