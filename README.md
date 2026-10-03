@@ -127,7 +127,7 @@ Discovery depends on GitHub's index and our search patterns, so a new mod may no
 
 ## Contribute
 
-Found a mod worth sharing, or a listing that needs a correction? [Open a pull request](https://github.com/karanb192/awesome-claude-code-mods/pulls). The contribution guide explains automatic discovery, manual submissions and how to dispute a footprint.
+Found a mod worth sharing, or a listing that needs a correction? [Open a pull request](https://github.com/karanb192/awesome-claude-code-mods/pulls). The [contribution guide](contributing.md) explains automatic discovery, manual submissions and how to dispute a footprint.
 
 ## Related
 
