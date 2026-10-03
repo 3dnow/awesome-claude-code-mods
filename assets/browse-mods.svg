@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="216" height="48" viewBox="0 0 216 48" role="img" aria-labelledby="title">
+  <title id="title">Browse all mods</title>
+  <rect width="216" height="48" rx="8" fill="#D97757"/>
+  <text x="22" y="30" fill="#1F1E1D" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="600">Browse all mods</text>
+  <path d="M180 24h14m-6-6 6 6-6 6" fill="none" stroke="#1F1E1D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

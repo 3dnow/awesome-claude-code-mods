@@ -6,7 +6,7 @@ Add a browser beside your conversation, keep usage in view, or check a command b
 
 This collection automatically discovers public mod repositories and shows what Claude's validator says each mod can read, write or run.
 
-**[Browse all mods](https://mods.aidojo.si/)** · [Full catalogue on GitHub](catalogue.md) · [Submit a mod](contributing.md)
+[![Browse all mods](assets/browse-mods.svg)](https://mods.aidojo.si/)
 
 <!-- stats:start -->
 **359 mods** · Last scanned 2026-10-02.
@@ -127,7 +127,7 @@ Discovery depends on GitHub's index and our search patterns, so a new mod may no
 
 ## Contribute
 
-Found a mod worth sharing, or a listing that needs a correction? [Open a pull request](https://github.com/karanb192/awesome-claude-code-mods/pulls). The contribution guide explains automatic discovery, manual submissions and how to dispute a footprint.
+Found a mod worth sharing, or a listing that needs a correction? [Open a pull request](https://github.com/karanb192/awesome-claude-code-mods/pulls). The [contribution guide](contributing.md) explains automatic discovery, manual submissions and how to dispute a footprint.
 
 ## Related
 
