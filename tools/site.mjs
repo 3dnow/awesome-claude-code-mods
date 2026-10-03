@@ -5,6 +5,7 @@ const css = readFileSync(new URL('./site.css', import.meta.url), 'utf8')
 const script = readFileSync(new URL('./site-client.js', import.meta.url), 'utf8')
 const repo = 'https://github.com/karanb192/awesome-claude-code-mods'
 const site = 'https://mods.aidojo.si/'
+const rawCatalogue = 'https://raw.githubusercontent.com/karanb192/awesome-claude-code-mods/main/catalogue.md'
 const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const url = value => /^https?:\/\//i.test(String(value)) ? esc(value) : '#directory'
 const arrow = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg>'
@@ -53,14 +54,14 @@ export function renderSite(data) {
     '@context': 'https://schema.org',
     '@graph': [
       { '@type': 'WebSite', '@id': `${site}#website`, url: site, name: 'Awesome Claude Code Mods', description, inLanguage: 'en' },
-      { '@type': 'CollectionPage', '@id': `${site}#page`, url: site, name: title, description, inLanguage: 'en', isPartOf: { '@id': `${site}#website` }, dateModified: data.generated, mainEntity: { '@id': `${site}#dataset` }, about: { '@type': 'SoftwareApplication', name: 'Claude Code', url: 'https://code.claude.com/docs/en/plugins/mods/overview' } },
-      { '@type': 'Dataset', '@id': `${site}#dataset`, name: 'Claude Code mods catalogue', url: site, dateModified: data.generated, license: 'https://creativecommons.org/publicdomain/zero/1.0/', isAccessibleForFree: true,
+      { '@type': 'CollectionPage', '@id': `${site}#page`, url: site, name: title, description, inLanguage: 'en', isPartOf: { '@id': `${site}#website` }, mainEntity: { '@id': `${site}#dataset` }, about: { '@type': 'SoftwareApplication', name: 'Claude Code', url: 'https://code.claude.com/docs/en/plugins/mods/overview' } },
+      { '@type': 'Dataset', '@id': `${site}#dataset`, name: 'Claude Code mods catalogue', url: site, license: 'https://creativecommons.org/publicdomain/zero/1.0/', isAccessibleForFree: true,
         description: `${mods.length} Claude Code mods scanned from public GitHub repositories on Claude Code ${data.claudeVersion}, with the hooks, API calls, access level and validation result of each mod.`,
         keywords: ['Claude Code', 'Claude Code mods', 'function hooks', 'Claude Code plugins', 'awesome list'],
         creator: { '@type': 'Person', name: 'Karan Bansal', url: 'https://github.com/karanb192' },
         distribution: [
           { '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: `${site}mods.json` },
-          { '@type': 'DataDownload', encodingFormat: 'text/markdown', contentUrl: `${repo}/blob/main/catalogue.md` },
+          { '@type': 'DataDownload', encodingFormat: 'text/markdown', contentUrl: rawCatalogue },
         ] },
     ],
   }).replace(/</g, '\\u003c')
@@ -100,10 +101,10 @@ ${builtins.length ? `<details class="builtins"><summary>Also built into Claude C
 <script>${script}</script></body></html>`.replace(/[ \t]+\n/g, '\n') + '\n'
 }
 
-export function renderSitemap(data) {
+export function renderSitemap() {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<url><loc>${site}</loc><lastmod>${data.generated.slice(0, 10)}</lastmod><changefreq>daily</changefreq></url>
+<url><loc>${site}</loc><changefreq>daily</changefreq></url>
 </urlset>
 `
 }
@@ -134,7 +135,7 @@ Mods are Claude Code plugins whose JavaScript or TypeScript hooks run inside a s
 
 - [Browse the mods](${site}): searchable directory with access and validation details for every mod
 - [mods.json](${site}mods.json): every mod with its hooks, API calls, access level, stars and validation result
-- [catalogue.md](${repo}/blob/main/catalogue.md): the same catalogue as Markdown tables
+- [catalogue.md](${rawCatalogue}): the same catalogue as Markdown tables
 - [README](${repo}#readme): curated picks by category, how to use mods, how the scan works
 
 ## Most starred mods

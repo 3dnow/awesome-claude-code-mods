@@ -8,7 +8,7 @@ Mods are Claude Code plugins whose JavaScript or TypeScript hooks run inside a s
 
 - [Browse the mods](https://mods.aidojo.si/): searchable directory with access and validation details for every mod
 - [mods.json](https://mods.aidojo.si/mods.json): every mod with its hooks, API calls, access level, stars and validation result
-- [catalogue.md](https://github.com/karanb192/awesome-claude-code-mods/blob/main/catalogue.md): the same catalogue as Markdown tables
+- [catalogue.md](https://raw.githubusercontent.com/karanb192/awesome-claude-code-mods/main/catalogue.md): the same catalogue as Markdown tables
 - [README](https://github.com/karanb192/awesome-claude-code-mods#readme): curated picks by category, how to use mods, how the scan works
 
 ## Most starred mods
