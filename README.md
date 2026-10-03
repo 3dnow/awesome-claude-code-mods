@@ -2,9 +2,9 @@
 
 > Community mods to make Claude Code work the way you do.
 
-Keep a browser beside your conversation, track usage above the prompt, or add a check before a risky command runs. Mods are plugins that change Claude Code's interface and behavior. You can install one someone has shared, or describe what you want and let Claude build it. [Anthropic's getting-started guide](https://claude.dev/blog/getting-started-with-claude-code-mods/#the-shortcut-let-claude-build-it) shows how.
+Add a browser beside your conversation, keep usage in view, or check a command before it runs. Mods are plugins that change Claude Code's interface and behavior. Install a community mod or [ask Claude to build one](https://claude.dev/blog/getting-started-with-claude-code-mods/#the-shortcut-let-claude-build-it).
 
-This collection automatically discovers public mod repositories and records the access reported by Claude's validator, so you can see what a mod reads, writes or runs before installing it.
+This collection automatically discovers public mod repositories and shows what Claude's validator says each mod can read, write or run.
 
 **[Browse all mods](https://mods.aidojo.si/)** · [Full catalogue on GitHub](catalogue.md) · [Submit a mod](contributing.md)
 
@@ -12,9 +12,9 @@ This collection automatically discovers public mod repositories and records the 
 **359 mods** · Last scanned 2026-10-02.
 <!-- stats:end -->
 
-[![Browsing a GitHub pull request beside a Claude Code conversation using terminal-browser](assets/terminal-browser-demo.gif)](assets/terminal-browser-demo.mp4)
+![Browsing a GitHub pull request beside a Claude Code conversation using terminal-browser](assets/terminal-browser-demo.gif)
 
-A six-second recording with [terminal-browser by zenbu-labs](https://github.com/zenbu-labs/terminal-browser). Select the preview for the full-resolution video.
+A six-second recording with [terminal-browser by zenbu-labs](https://github.com/zenbu-labs/terminal-browser). [Download the full-resolution video](assets/terminal-browser-demo.mp4?raw=1).
 
 ## Contents
 
