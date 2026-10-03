@@ -8962,7 +8962,7 @@
       "author": "Wes Sander",
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/engine/mods/claude-runtime",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -9071,7 +9071,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:engine/mods/claude-runtime"
     },
     {
       "id": "ucsandman/claude-harness:engine/mods/harness-mods",
@@ -9083,7 +9084,7 @@
       "author": "Wes Sander",
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/engine/mods/harness-mods",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.tsx"
@@ -9179,7 +9180,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:engine/mods/harness-mods"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/bench",
@@ -9268,7 +9270,7 @@
       "author": null,
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/demos/bender",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -9316,7 +9318,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/demos/bender"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/demos/blackbox",
@@ -9328,7 +9331,7 @@
       "author": null,
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/demos/blackbox",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -9402,7 +9405,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/demos/blackbox"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/demos/guardian",
@@ -9414,7 +9418,7 @@
       "author": null,
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/demos/guardian",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -9468,7 +9472,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/demos/guardian"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/demos/matrix",
@@ -9480,7 +9485,7 @@
       "author": null,
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/demos/matrix",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -9539,7 +9544,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/demos/matrix"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/demos/tunnel/cost",
@@ -9551,7 +9557,7 @@
       "author": null,
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/demos/tunnel/cost",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -9595,7 +9601,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/demos/tunnel/cost"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/demos/tunnel/observer",
@@ -9607,7 +9614,7 @@
       "author": null,
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/demos/tunnel/observer",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -9651,7 +9658,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/demos/tunnel/observer"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/demos/tunnel/policy",
@@ -9663,7 +9671,7 @@
       "author": null,
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/demos/tunnel/policy",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -9707,7 +9715,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/demos/tunnel/policy"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/demos/tunnel/telemetry",
@@ -9719,7 +9728,7 @@
       "author": null,
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/demos/tunnel/telemetry",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -9763,7 +9772,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/demos/tunnel/telemetry"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/probe",
@@ -9837,7 +9847,7 @@
       "author": null,
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/probe-ui",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.tsx"
@@ -9908,7 +9918,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/probe-ui"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/probe2",
@@ -9920,7 +9931,7 @@
       "author": null,
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/probe2",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -10032,7 +10043,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/probe2"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/probe3",
@@ -10044,7 +10056,7 @@
       "author": null,
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/probe3",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -10127,7 +10139,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/probe3"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/spike-compact",
@@ -10139,7 +10152,7 @@
       "author": "Wes Sander",
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/spike-compact",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -10188,7 +10201,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/spike-compact"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/spike-describe",
@@ -10200,7 +10214,7 @@
       "author": "Wes Sander",
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/spike-describe",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -10261,7 +10275,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/spike-describe"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/spike-handoff",
@@ -10273,7 +10288,7 @@
       "author": "Wes Sander",
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/spike-handoff",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.ts"
@@ -10334,7 +10349,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/spike-handoff"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/lab/xray",
@@ -10346,7 +10362,7 @@
       "author": "Wes Sander",
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/lab/xray",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.tsx"
@@ -10422,7 +10438,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/lab/xray"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/prototypes/costclaw-live",
@@ -10434,7 +10451,7 @@
       "author": "Wes Sander",
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/prototypes/costclaw-live",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.tsx"
@@ -10517,7 +10534,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/prototypes/costclaw-live"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/prototypes/prodguard",
@@ -10529,7 +10547,7 @@
       "author": "claude-mods-rnd",
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/prototypes/prodguard",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.tsx"
@@ -10614,7 +10632,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/prototypes/prodguard"
     },
     {
       "id": "ucsandman/claude-harness:labs/claude-mods/prototypes/supervisor",
@@ -10626,7 +10645,7 @@
       "author": "Wes Sander",
       "homepage": "https://github.com/ucsandman/claude-harness",
       "url": "https://github.com/ucsandman/claude-harness/tree/main/labs/claude-mods/prototypes/supervisor",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./index.tsx"
@@ -10711,7 +10730,8 @@
       "createdAt": "2026-08-13T21:10:11Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "ucsandman/Agnostic-AI:labs/claude-mods/prototypes/supervisor"
     },
     {
       "id": "AlmogBaku/ContextSaver:.",
@@ -34626,7 +34646,7 @@
       "author": "Lee Overy",
       "homepage": "https://github.com/leeovery/tick",
       "url": "https://github.com/leeovery/tick/tree/main/.claude/skills/workflow-gates",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -34738,7 +34758,8 @@
       "createdAt": "2026-01-19T10:48:48Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "leeovery/portal:.claude/skills/workflow-gates"
     },
     {
       "id": "leeovery/tick:.claude/skills/workflow-gates-rows",
@@ -34750,7 +34771,7 @@
       "author": "Lee Overy",
       "homepage": "https://github.com/leeovery/tick",
       "url": "https://github.com/leeovery/tick/tree/main/.claude/skills/workflow-gates-rows",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -34799,7 +34820,8 @@
       "createdAt": "2026-01-19T10:48:48Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "leeovery/portal:.claude/skills/workflow-gates-rows"
     },
     {
       "id": "leinardi/adversarial-review-loop:.",
@@ -48516,7 +48538,7 @@
       "author": "Murat Can Yuksel",
       "homepage": "https://github.com/0xGondarxyz/claudeMods",
       "url": "https://github.com/0xGondarxyz/claudeMods/tree/main/dashless",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -48584,7 +48606,8 @@
       "createdAt": "2026-10-02T03:00:48Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "0xGondarxyz/claude-code-mods:dashless"
     },
     {
       "id": "0xGondarxyz/output-ladder:.",
@@ -48596,7 +48619,7 @@
       "author": "Murat Can Yuksel",
       "homepage": "https://github.com/0xGondarxyz/output-ladder",
       "url": "https://github.com/0xGondarxyz/output-ladder",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./register.tsx"
@@ -48679,7 +48702,8 @@
       "createdAt": "2026-10-02T15:06:39Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "0xGondarxyz/claude-code-mods:output-ladder"
     },
     {
       "id": "0xGondarxyz/secret-guard:.",
@@ -48691,7 +48715,7 @@
       "author": "Murat Can Yuksel",
       "homepage": "https://github.com/0xGondarxyz/secret-guard",
       "url": "https://github.com/0xGondarxyz/secret-guard",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -48763,7 +48787,8 @@
       "createdAt": "2026-10-02T20:23:05Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "0xGondarxyz/claude-code-mods:secret-guard"
     },
     {
       "id": "0xGondarxyz/slopless:.",
@@ -48775,7 +48800,7 @@
       "author": "Murat Can Yuksel",
       "homepage": "https://github.com/0xGondarxyz/slopless",
       "url": "https://github.com/0xGondarxyz/slopless",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -48837,7 +48862,8 @@
       "createdAt": "2026-10-02T12:54:29Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "0xGondarxyz/claude-code-mods:slopless"
     },
     {
       "id": "0xGondarxyz/spiral-stop:.",
@@ -48849,7 +48875,7 @@
       "author": "Murat Can Yuksel",
       "homepage": "https://github.com/0xGondarxyz/spiral-stop",
       "url": "https://github.com/0xGondarxyz/spiral-stop",
-      "kind": "mod",
+      "kind": "duplicate",
       "hasManifest": true,
       "modules": [
         "./register.tsx"
@@ -48926,7 +48952,8 @@
       "createdAt": "2026-10-02T20:28:23Z",
       "license": "MIT",
       "archived": false,
-      "defaultBranch": "main"
+      "defaultBranch": "main",
+      "duplicateOf": "0xGondarxyz/claude-code-mods:spiral-stop"
     },
     {
       "id": "851-labs/subway-surfers-claude-code-mod:.",
@@ -65991,7 +66018,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/check-engine",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66046,7 +66073,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/clip",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66101,7 +66128,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/clock",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66156,7 +66183,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/control-panel",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66211,7 +66238,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/dashcam",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66266,7 +66293,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/drop-folder",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66321,7 +66348,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/gps",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66376,7 +66403,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/horn",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66431,7 +66458,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/house-style",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66486,7 +66513,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/human-signoff",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66541,7 +66568,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/leak-guard",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66596,7 +66623,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/memory-trim",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66651,7 +66678,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/needs-you-chime",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66706,7 +66733,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/on-camera",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66761,7 +66788,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/open-it",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66816,7 +66843,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/page-pile",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66871,7 +66898,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/perm-audit",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66926,7 +66953,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/pin",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -66981,7 +67008,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/read-aloud",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -67036,7 +67063,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/rearview",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -67091,7 +67118,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/record",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -67146,7 +67173,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/run-by-name",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -67201,7 +67228,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/seatbelt",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -67256,7 +67283,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/skins",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -67311,7 +67338,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/tool-gaps",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -67366,7 +67393,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/turn-meter",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"
@@ -67421,7 +67448,7 @@
       "author": "Rostech",
       "homepage": "https://github.com/DJPalefaceSD/rostech-mods",
       "url": "https://github.com/DJPalefaceSD/rostech-mods/tree/main/stubs/wipers",
-      "kind": "mod",
+      "kind": "fixture",
       "hasManifest": true,
       "modules": [
         "./register.ts"

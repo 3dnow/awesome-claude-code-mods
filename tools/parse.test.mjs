@@ -6,6 +6,8 @@ import { validate, relativePaths } from './validate.mjs'
 import { mkdtempSync, mkdirSync, writeFileSync, chmodSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 
 const SAMPLE = `Validating plugin manifest: /x/.claude-plugin/plugin.json
 
@@ -105,7 +107,9 @@ test('a listed duplicate collapses onto its successor; an unlisted same-owner sa
   assert.deepEqual(suspectDuplicates(applied), [['o/lint:.', 'o/tools:lint']])
   const orphaned = applyDuplicates(mods().filter(m => m.id !== 'o/mono:queue'), list)
   assert.equal(orphaned.find(m => m.id === 'o/queue-plugin:.').kind, 'mod')
-  assert.deepEqual([...readDuplicates('data/duplicates.txt')], [['galElmalah/claude-queue-plugin:.', 'galElmalah/claude-mods:claude-queue']])
+  const listed = [...readDuplicates('data/duplicates.txt')]
+  assert.deepEqual(listed[0], ['galElmalah/claude-queue-plugin:.', 'galElmalah/claude-mods:claude-queue'])
+  for (const pair of listed) assert.ok(pair.length === 2 && pair.every(id => /^[\w.-]+\/[\w.-]+:\S+$/.test(id)) && pair[0] !== pair[1], pair.join(' '))
   assert.deepEqual([...readDuplicates('data/no-such-file.txt')], [])
 })
 
@@ -124,6 +128,8 @@ test('kindOf files built-ins, fixtures, mirrors and catalogue copies, and counts
   const catalogs = new Set(['cat/templates'])
   assert.equal(kindOf('anthropics/claude-code', 'mods/diff', { name: 'diff' }), 'builtin')
   assert.equal(kindOf('a/b', 'tests/fixtures/x', { name: 'x' }), 'fixture')
+  assert.equal(kindOf('a/b', 'stubs/clip', { name: 'clip' }), 'fixture')
+  assert.equal(kindOf('a/b', 'plugins/clip', { name: 'clip' }), 'mod')
   assert.equal(kindOf('a/b', '.', { name: 'x', description: 'A test fixture, not a product mod' }), 'fixture')
   assert.equal(kindOf('a/b', 'upstreams/claude-code/mods/telemetry', { name: 'telemetry' }), 'fixture')
   assert.equal(kindOf('a/b', 'vendor/mods/telemetry', { name: 'telemetry' }), 'mirror')
@@ -191,4 +197,19 @@ test('validator errors keep paths relative to the scanned repository', t => {
   for (const error of result.errors) assert.ok(!error.includes(root), error)
   assert.match(result.errors.join('\n'), /plugins\/demo\/hooks\/register\.ts: no such file \(from other__repo\/x\.ts\)/)
   assert.equal(relativePaths('/tmp/c/owner__repo', ['/tmp/c/owner__repo']), '.')
+})
+
+test('the change check reads a committed scan larger than the default output buffer', t => {
+  const root = mkdtempSync(join(tmpdir(), 'changed-large-'))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  mkdirSync(join(root, 'data'))
+  const one = i => ({ id: `o/r${i}:.`, repo: `o/r${i}`, kind: 'mod', name: `m${i}`, description: 'x'.repeat(2000), hooks: [], calls: [], reach: { level: 0 }, sees: [], validate: { status: 'passed' }, archived: false })
+  writeFileSync(join(root, 'data/mods.json'), JSON.stringify({ claudeVersion: '1', repos: 800, mods: Array.from({ length: 800 }, (_, i) => one(i)) }))
+  const git = (...args) => spawnSync('git', args, { cwd: root, encoding: 'utf8' })
+  git('init', '-q'); git('add', '.'); git('-c', 'user.name=t', '-c', 'user.email=t@example.com', 'commit', '-qm', 'scan')
+  const run = spawnSync(process.execPath, [fileURLToPath(new URL('./changed.mjs', import.meta.url))], { cwd: root, encoding: 'utf8' })
+  assert.equal(run.status, 1, run.stderr)
+  assert.equal(run.stdout.trim(), 'no meaningful change')
+  const broken = spawnSync(process.execPath, [fileURLToPath(new URL('./changed.mjs', import.meta.url)), join(root, 'missing.json')], { cwd: root, encoding: 'utf8' })
+  assert.equal(broken.status, 2)
 })
