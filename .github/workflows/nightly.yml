@@ -90,5 +90,5 @@ jobs:
           branch: nightly-scan
           title: "Nightly scan: refresh footprints and badges"
           commit-message: "Nightly scan: refresh footprints and badges"
-          body: "Automated discovery and rescan against the current Claude Code release. Known candidates are retained; missing plugins remain unverified until the weekly retirement review. Opened when inventory or validation changes; Sundays also refresh stars. Review README.md and data/mods.json before merging."
+          body: "Automated discovery and rescan against the current Claude Code release. Known candidates are retained; missing plugins remain unverified until the weekly retirement review. Opened when inventory or validation changes; Sundays also refresh stars. Review catalogue.md and data/mods.json before merging."
           labels: scan

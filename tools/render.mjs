@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Renders data/mods.json into the README's generated blocks, one SVG badge pair
+// Renders data/mods.json into the README count, catalogue, one SVG badge pair
 // per mod under badges/ and docs/badges/, and the directory under docs/.
 
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs'
@@ -15,7 +15,6 @@ const asOf = data.generated.slice(0, 10)
 
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const cell = s => String(s ?? '').replace(/\|/g, '\\|').replace(/[\[\]]/g, '\\$&').replace(/\n/g, ' ')
-// The table links the manifest that was validated, so the curated entries above keep the only link to each repo.
 const manifestUrl = m => `https://github.com/${m.repo}/blob/${m.defaultBranch ?? 'main'}/${m.path === '.' ? '' : m.path + '/'}.claude-plugin/plugin.json`
 const slug = m => `${m.repo.replace('/', '--')}--${m.name}`.replace(/[^A-Za-z0-9._-]/g, '-')
 const short = (s, n = 110) => { s = String(s ?? '').replace(/\s+/g, ' ').replace(/\s*[\u2014\u2013]\s*/g, ': ').trim(); return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s }
@@ -72,19 +71,20 @@ function table(rows) {
   return [line(head), `| ${widths.map(w => '-'.repeat(w)).join(' | ')} |`, ...rows.map(r => line(row(r)))].join('\n')
 }
 
-let readme = readFileSync('README.md', 'utf8')
-const replaceBlock = (name, body) => {
-  const re = new RegExp(`(<!-- ${name}:start -->)[\\s\\S]*?(<!-- ${name}:end -->)`)
-  if (!re.test(readme)) throw new Error(`README is missing the ${name} markers`)
-  readme = readme.replace(re, `$1\n${body}\n$2`)
+function updateBlocks(file, blocks) {
+  let text = readFileSync(file, 'utf8')
+  for (const [name, body] of Object.entries(blocks)) {
+    const re = new RegExp(`(<!-- ${name}:start -->)[\\s\\S]*?(<!-- ${name}:end -->)`)
+    if (!re.test(text)) throw new Error(`${file} is missing the ${name} markers`)
+    text = text.replace(re, () => `<!-- ${name}:start -->\n${body}\n<!-- ${name}:end -->`)
+  }
+  writeFileSync(file, text)
 }
-replaceBlock('stats', stats)
-replaceBlock('scan', table(mods))
-replaceBlock('builtin', table(builtins))
-writeFileSync('README.md', readme)
+updateBlocks('README.md', { stats: `**${mods.length} mods** · Last scanned ${asOf}.` })
+updateBlocks('catalogue.md', { stats, scan: table(mods), builtin: table(builtins) })
 
 const site = renderSite(data)
 mkdirSync('docs', { recursive: true })
 writeFileSync('docs/index.html', site)
 writeFileSync('docs/mods.json', JSON.stringify(data, null, 2) + '\n')
-console.log(`rendered ${mods.length} mods and ${builtins.length} built-ins into README.md, badges/, docs/ and docs/badges/`)
+console.log(`rendered ${mods.length} mods and ${builtins.length} built-ins into README.md, catalogue.md, badges/, docs/ and docs/badges/`)
