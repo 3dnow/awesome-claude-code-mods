@@ -4,7 +4,7 @@ Two ways to get a mod listed.
 
 ## Let the scanner find it
 
-A daily scan searches GitHub code for repositories that mention `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS` or ship a `hooks/hooks.json` with a `modules` key. Public repositories matching those patterns become candidates once GitHub indexes them and discovery succeeds. Every three hours, a faster scan also checks repositories pushed since the last scan that have the topic `claude-code-mod`, `claude-code-mods`, `claude-mods`, `function-hooks` or `claude-code-plugin`, or "claude mod" in the name or description. Adding the `claude-code-mod` topic gets a new mod found within hours, before code search indexes it. Results appear after the generated update pull request is merged. Known candidates are retained even when a later search omits them.
+A daily scan searches GitHub code for repositories that mention `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS` or ship a `hooks/hooks.json` with a `modules` key. Public repositories matching those patterns become candidates once GitHub indexes them and discovery succeeds. Every three hours, a faster scan also checks repositories pushed since the last complete search that have the topic `claude-code-mod`, `claude-code-mods`, `claude-mods`, `function-hooks` or `claude-code-plugin`, or "claude mod" in the name or description. With the `claude-code-mod` topic, a mod is found within hours of its next push, before code search indexes it. Results appear after the generated update pull request is merged. Known candidates are retained even when a later search omits them.
 
 ## Open a pull request
 
@@ -52,7 +52,7 @@ npx playwright install chromium  # once, for browser checks
 npm run test:render  # generated statuses, badges and responsive layout
 npm run lint        # awesome-lint on README.md
 npm run discover    # refresh data/repos.txt (needs gh logged in)
-npm run discover -- --recent --skip-code-search  # the three-hourly scan: seeds plus repos pushed since the last scan
+npm run discover -- --recent --skip-code-search  # the three-hourly scan: seeds plus repos pushed since the last search; progress in data/discovery.json
 npm run discover -- --recent --keep-on-failure   # the daily scan: a failed code search keeps the known candidates
 npm run scan        # clone, validate, write data/mods.json (needs the claude CLI)
 npm run scan -- --retire  # weekly removal audit; writes revision evidence for review

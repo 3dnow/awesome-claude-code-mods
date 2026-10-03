@@ -5,17 +5,18 @@
 // GH_TOKEN in the environment.
 //
 //   node tools/discover.mjs                         # code search; fails without writing when it cannot finish
-//   node tools/discover.mjs --recent                # also repository search for repos pushed since the last scan
+//   node tools/discover.mjs --recent                # also repository search; reads and updates data/discovery.json
 //   node tools/discover.mjs --skip-code-search      # known candidates and seeds only
 //   node tools/discover.mjs --keep-on-failure       # a failed code search keeps the known candidates instead of failing
 //   node tools/discover.mjs --recent --check-limit 2000  # check more new repos than the default 200
 //   node tools/discover.mjs --note <file>           # write what discovery did, for the scan pull request
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { parseArgs } from 'node:util'
 import { readRepos, mergeRepos } from './candidates.mjs'
 import { createSearchRequest } from './github-search.mjs'
-import { findRecent, recentSince } from './recent.mjs'
+import { findRecent, recentSince, readState, writeState, describeRecent } from './recent.mjs'
 
 const QUERIES = [
   'CLAUDE_CODE_ENABLE_FUNCTION_HOOKS',
@@ -90,6 +91,15 @@ function lastScan() {
   try { return JSON.parse(readFileSync('data/mods.json', 'utf8')).generated } catch { return null }
 }
 
+// The scanner fetches metadata in GraphQL batches; keep some REST calls back for its per-repo fallback.
+const SCAN_RESERVE = 100
+function apiBudget() {
+  try {
+    const remaining = Number(execFileSync('gh', ['api', 'rate_limit', '--jq', '.resources.core.remaining'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }))
+    return Number.isFinite(remaining) ? Math.max(0, remaining - SCAN_RESERVE) : Infinity
+  } catch { return Infinity }
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const { values: args } = parseArgs({ options: {
     'skip-code-search': { type: 'boolean', default: false },
@@ -118,15 +128,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     }
   }
   if (args.recent) {
-    const since = args.since ?? recentSince(lastScan())
-    try {
-      const found = findRecent(since, mergeRepos(previous, seeds, discovered), { limit })
-      discovered.push(...found)
-      notes.push(found.length ? `Repository search since ${since} added ${found.join(', ')}.` : `Repository search since ${since} added no candidates.`)
-    } catch (error) {
-      console.error(error.message)
-      notes.push(`Repository search did not finish. ${firstLine(error)}`)
-    }
+    const state = readState()
+    const since = args.since ?? recentSince(state.searchedThrough ?? lastScan())
+    const result = findRecent(since, mergeRepos(previous, seeds, discovered), { state, limit, budget: apiBudget(), advance: !args.since })
+    discovered.push(...result.found)
+    writeState(result.state)
+    notes.push(...describeRecent(since, result))
   }
   mkdirSync('data', { recursive: true })
   const repos = mergeRepos(previous, seeds, discovered)
