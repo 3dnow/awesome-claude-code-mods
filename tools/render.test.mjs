@@ -27,6 +27,20 @@ function fixture(t, mods) {
 
 const render = dir => execFileSync(process.execPath, [renderer], { cwd: dir, stdio: 'pipe' })
 
+test('generated descriptions preserve literal replacement tokens', t => {
+  const description = "Literal $& and $` and $' and $$ stay in the description."
+  const dir = fixture(t, [{ ...mod(0), description }])
+  render(dir)
+  const catalogue = readFileSync(join(dir, 'catalogue.md'), 'utf8')
+  assert.ok(catalogue.includes(description))
+  for (const marker of ['stats', 'scan', 'builtin']) {
+    assert.equal(catalogue.split(`<!-- ${marker}:start -->`).length - 1, 1)
+    assert.equal(catalogue.split(`<!-- ${marker}:end -->`).length - 1, 1)
+  }
+  render(dir)
+  assert.equal(readFileSync(join(dir, 'catalogue.md'), 'utf8'), catalogue)
+})
+
 test('repeat scans refresh the README count and catalogue without duplicating tables', t => {
   const dir = fixture(t, [mod(0)])
   render(dir)

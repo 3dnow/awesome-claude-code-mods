@@ -1,6 +1,6 @@
 # Awesome Claude Code Mods [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
 
-> Community mods to make Claude Code work the way you do.
+> Discover Claude Code mods and see what each one can access.
 
 Add a browser beside your conversation, keep usage in view, or check a command before it runs. Mods are plugins that change Claude Code's interface and behavior. Install a community mod or [ask Claude to build one](https://claude.dev/blog/getting-started-with-claude-code-mods/#the-shortcut-let-claude-build-it).
 
@@ -15,6 +15,10 @@ This collection automatically discovers public mod repositories and shows what C
 ![Browsing a GitHub pull request beside a Claude Code conversation using terminal-browser](assets/terminal-browser-demo.gif)
 
 A six-second recording with [terminal-browser by zenbu-labs](https://github.com/zenbu-labs/terminal-browser). [Download the full-resolution video](assets/terminal-browser-demo.mp4?raw=1).
+
+The scanner reports network access, host processes and prompt changes for this mod.
+
+[![Terminal-browser access: L3 network, runs processes, drives Claude, writes the prompt box, reads files and draws](badges/zenbu-labs--terminal-browser--terminal-browser-reach.svg)](https://mods.aidojo.si/#zenbu-labs--terminal-browser--terminal-browser)
 
 ## Contents
 
@@ -91,6 +95,7 @@ Read the mod's source and access details before installing. Validation checks th
 
 ## Rendering
 
+- [terminal-browser](https://github.com/zenbu-labs/terminal-browser/tree/main/claude-code-plugin) - A browser beside your Claude Code conversation for websites, local HTML previews and GitHub pull requests.
 - [claude-mermaid](https://github.com/galElmalah/claude-mermaid) - Every mermaid block Claude writes is drawn as box art, in colour, where the fence was in the transcript.
 
 ## Agents and workflows
@@ -112,7 +117,7 @@ Read the mod's source and access details before installing. Validation checks th
 
 ## Every mod the scanner found
 
-The **[full catalogue](catalogue.md#every-mod-the-scanner-found)** includes each discovered mod's description, access, observed events and validation result. [Built-in mods](catalogue.md#built-into-claude-code) are listed separately. Use the website to search and filter the collection.
+The **[full catalogue](catalogue.md#every-mod-the-scanner-found)** includes each discovered mod's description, access, observed events and validation result. [Built-in mods](catalogue.md#built-into-claude-code) are listed separately. [Search and filter the collection on the website](https://mods.aidojo.si/#directory).
 
 ## How the scan works
 
