@@ -5,7 +5,7 @@
   "description": "Every Claude Code mod on GitHub, with what each one can reach",
   "type": "module",
   "scripts": {
-    "test": "node --test tools/parse.test.mjs tools/discovery.test.mjs tools/compatibility.test.mjs",
+    "test": "node --test tools/parse.test.mjs tools/discovery.test.mjs tools/github-search.test.mjs tools/compatibility.test.mjs",
     "test:render": "node --test tools/render.test.mjs",
     "lint": "awesome-lint",
     "discover": "node tools/discover.mjs",

@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { search } from './discover.mjs'
+import { search as discover } from './discover.mjs'
+import { createSearchRequest } from './github-search.mjs'
 import { mergeRepos, newSeeds } from './candidates.mjs'
 import { reconcile, checkRequired } from './inventory.mjs'
 import { execFileSync, spawnSync } from 'node:child_process'
@@ -10,6 +11,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const response = items => ({ total_count: items.length, incomplete_results: false, items })
+const search = (q, run, attempts = 4, wait = () => {}, pause = 10) => discover(q, createSearchRequest({ run, attempts, wait, pause, random: () => 0, log: () => {} }))
 const files = n => Array.from({ length: n }, (_, i) => ({ path: `file-${i}`, repository: { full_name: `owner/repo-${i}` }, size: i * 100 }))
 function api(items) {
   return (q, page) => {
@@ -68,7 +70,7 @@ test('pagination cannot silently skip files, repeat files or change total counts
 test('rate limits respect server hints, retry exhaustion fails and auth errors stop immediately', () => {
   const waits = []
   let calls = 0
-  assert.throws(() => search('flag', () => { calls++; throw new Error('HTTP 429 try again in 243s') }, 3, n => waits.push(n), 0), /code search failed/)
+  assert.throws(() => search('flag', () => { calls++; throw Object.assign(new Error('try again in 243s'), { status: 429 }) }, 3, n => waits.push(n), 0), /code search failed/)
   assert.equal(calls, 3)
   assert.deepEqual(waits.filter(Boolean), [244, 244])
   calls = 0
