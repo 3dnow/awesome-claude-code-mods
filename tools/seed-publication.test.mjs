@@ -5,7 +5,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { appendSeeds, pendingSeeds, planPublication } from './seed-publication.mjs'
+import { appendSeeds, pendingSeeds, planPublication, reviewSeed } from './seed-publication.mjs'
 
 const mod = (repo, name = 'mod', extra = {}) => ({
   id: `${repo}:${name}`, repo, name, kind: 'mod', sourceCommit: 'a'.repeat(40),
@@ -16,6 +16,12 @@ const inventory = mods => ({ generated: '2026-01-01T00:00:00Z', claudeVersion: '
 const before = () => inventory([mod('existing/repo')])
 const scan = () => inventory([mod('new/repo', 'one'), mod('new/repo', 'two')])
 const append = (current = scan(), prior = before(), duplicates) => appendSeeds(prior, current, ['new/repo'], ['existing/repo'], duplicates)
+const skippedFor = (result, pattern) => {
+  assert.equal(result.inventory, null)
+  assert.deepEqual(result.published, [])
+  assert.equal(result.skipped.length, 1)
+  assert.match(result.skipped[0].reason, pattern)
+}
 
 test('pending seeds include all unpublished approvals, not only the latest push', () => {
   assert.deepEqual(pendingSeeds(['Existing/Repo', 'new/repo', 'earlier/repo', 'NEW/repo'], before()), ['earlier/repo', 'new/repo'])
@@ -40,25 +46,33 @@ test('a retry cannot replace entries already published by a concurrent scan', ()
   assert.throws(() => appendSeeds(before(), scan(), [], []), /No unpublished seeds/)
 })
 
-test('unrelated repositories and colliding plugin IDs cannot enter the automatic merge', () => {
+test('an inconsistent scan stops the whole run', () => {
   assert.throws(() => append(inventory([mod('unapproved/repo')])), /Unapproved repository/)
   assert.throws(() => append(inventory([mod('new/repo', 'same'), mod('new/repo', 'same')])), /Duplicate plugin ID/)
-  assert.throws(() => append(inventory([mod('new/repo', 'x', { id: 'existing/repo:mod' })])), /Duplicate plugin ID/)
-})
-
-test('failed, unknown, marketplace and compatibility results require intervention', () => {
-  for (const status of ['failed', 'unknown']) {
-    assert.throws(() => append(inventory([mod('new/repo', 'x', { validate: { status, claudeVersion: '2.1.287' } })])), /Validation needs review/)
-    assert.throws(() => append(inventory([mod('new/repo', 'x', { marketplaces: [{ status }] })])), /Marketplace needs review/)
-  }
-  assert.throws(() => append(inventory([mod('new/repo', 'x', { compatibility: { warnings: ['review'] } })])), /Compatibility needs review/)
-  assert.throws(() => append(inventory([])), /No counted mods/)
-  assert.throws(() => append(inventory([mod('new/repo', 'probe', { kind: 'fixture' })])), /No counted mods/)
-})
-
-test('validator versions must match both the scan and each new record', () => {
   assert.throws(() => append({ ...scan(), claudeVersion: '2.1.288' }), /published validator version/)
-  assert.throws(() => append(inventory([mod('new/repo', 'x', { validate: { status: 'passed', claudeVersion: '2.1.288' } })])), /Validator mismatch/)
+})
+
+test('failed, unknown, marketplace and compatibility results keep that seed unpublished', () => {
+  for (const status of ['failed', 'unknown']) {
+    skippedFor(append(inventory([mod('new/repo', 'x', { validate: { status, claudeVersion: '2.1.287' } })])), /validation needs review/)
+    skippedFor(append(inventory([mod('new/repo', 'x', { marketplaces: [{ status }] })])), /marketplace needs review/)
+  }
+  skippedFor(append(inventory([mod('new/repo', 'x', { compatibility: { warnings: ['review'] } })])), /compatibility needs review/)
+  skippedFor(append(inventory([])), /no validating mod plugins/)
+  skippedFor(append(inventory([mod('new/repo', 'probe', { kind: 'fixture' })])), /no validating mod plugins/)
+  skippedFor(append(inventory([mod('new/repo', 'x', { id: 'existing/repo:mod' })])), /already published/)
+  skippedFor(append(inventory([mod('new/repo', 'x', { validate: { status: 'passed', claudeVersion: '2.1.288' } })])), /validator mismatch/)
+  assert.equal(reviewSeed(scan().mods, '2.1.287', new Set()), null)
+})
+
+test('one failing seed does not hold back the others', () => {
+  const current = inventory([...scan().mods, mod('bad/repo', 'x', { validate: { status: 'failed', claudeVersion: '2.1.287' } }), mod('gone/repo', 'probe', { kind: 'fixture' })])
+  const result = appendSeeds(before(), current, ['new/repo', 'bad/repo', 'gone/repo', 'missing/repo'], ['existing/repo'])
+  assert.deepEqual(result.published, ['new/repo'])
+  assert.deepEqual(result.inventory.mods.map(m => m.repo), ['existing/repo', 'new/repo', 'new/repo'])
+  assert.deepEqual(result.repos, ['existing/repo', 'new/repo'])
+  assert.deepEqual(result.skipped.map(s => s.repo).sort(), ['bad/repo', 'gone/repo', 'missing/repo'])
+  assert.deepEqual(pendingSeeds(['new/repo', 'bad/repo', 'gone/repo', 'missing/repo'], result.inventory), ['bad/repo', 'gone/repo', 'missing/repo'])
 })
 
 test('warnings and fixtures are retained when the seed includes valid counted mods', () => {
@@ -66,10 +80,13 @@ test('warnings and fixtures are retained when the seed includes valid counted mo
   assert.equal(append(current).inventory.mods.length, 3)
 })
 
-test('only duplicate suspicions involving new entries block publication', () => {
+test('only duplicate suspicions involving new entries keep a seed unpublished', () => {
   const prior = inventory([mod('same/one'), mod('same/two')])
   assert.equal(append(scan(), prior).inventory.mods.length, 4)
-  assert.throws(() => appendSeeds(prior, inventory([mod('same/three')]), ['same/three'], []), /possible duplicate/)
+  skippedFor(appendSeeds(prior, inventory([mod('same/three')]), ['same/three'], []), /possible duplicate/)
+  const mixed = appendSeeds(prior, inventory([mod('same/three'), mod('new/repo')]), ['same/three', 'new/repo'], [])
+  assert.deepEqual(mixed.published, ['new/repo'])
+  assert.deepEqual(mixed.skipped.map(s => s.repo), ['same/three'])
   const duplicates = new Map([['same/three:mod', 'same/one:mod']])
   const result = appendSeeds(prior, inventory([mod('same/three')]), ['same/three'], [], duplicates)
   assert.equal(result.inventory.mods.at(-1).kind, 'duplicate')
@@ -77,7 +94,10 @@ test('only duplicate suspicions involving new entries block publication', () => 
 
 test('a new seed cannot silently reclassify an existing mod as a duplicate', () => {
   const duplicates = new Map([['existing/repo:mod', 'new/repo:one']])
-  assert.throws(() => append(scan(), before(), duplicates), /existing duplicate decision/)
+  skippedFor(append(scan(), before(), duplicates), /reclassifies existing\/repo:mod/)
+  const result = appendSeeds(before(), inventory([...scan().mods, mod('other/repo')]), ['new/repo', 'other/repo'], ['existing/repo'], duplicates)
+  assert.deepEqual(result.published, ['other/repo'])
+  assert.deepEqual(result.inventory.mods[0], before().mods[0])
 })
 
 test('a contributor merge during a scan does not discard that scan or publish unscanned seeds', () => {
@@ -119,14 +139,14 @@ for (const concurrentPublication of [false, true]) test(`publication handles a c
   const renderable = (repo, name) => ({ ...mod(repo, name), path: name, description: name, url: `https://github.com/${repo}`, stars: 1, reach: { level: 0, labels: [] }, sees: [], hooks: [], calls: [], surfaceModules: [] })
   writeFileSync(join(checkout, 'data/mods.json'), JSON.stringify(inventory([renderable('existing/repo', 'old')])))
   writeFileSync(join(checkout, 'data/repos.txt'), 'existing/repo\n')
-  writeFileSync(join(checkout, 'data/seeds.txt'), 'existing/repo\nnew/repo\n')
+  writeFileSync(join(checkout, 'data/seeds.txt'), 'existing/repo\nnew/repo\nbroken/repo\n')
   writeFileSync(join(checkout, 'README.md'), '<!-- stats:start -->\n<!-- stats:end -->\n')
   writeFileSync(join(checkout, 'catalogue.md'), ['stats', 'scan', 'builtin'].map(name => `<!-- ${name}:start -->\n<!-- ${name}:end -->`).join('\n'))
   execFileSync(process.execPath, ['tools/render.mjs'], { cwd: checkout, env })
   git('add', '.')
   git('commit', '-m', 'Fixture inventory')
   git('push', 'origin', 'HEAD:main')
-  writeFileSync(join(runner, 'seeds.txt'), 'new/repo\n')
+  writeFileSync(join(runner, 'seeds.txt'), 'new/repo\nbroken/repo\n')
   writeFileSync(join(runner, 'seed-scan.json'), JSON.stringify(inventory([renderable('new/repo', 'new')])))
   const log = join(root, 'commands.jsonl'), marker = join(root, 'advanced'), pr = join(root, 'pr')
   const prelude = `#!${process.execPath}\nconst fs=require('node:fs'),cp=require('node:child_process');const args=process.argv.slice(2);fs.appendFileSync(${JSON.stringify(log)},JSON.stringify([require('node:path').basename(process.argv[1]),...args])+'\\n');const git=(...a)=>cp.execFileSync('git',a,{encoding:'utf8'}).trim();\n`
@@ -149,7 +169,7 @@ if(args[0]==='api'){
   }
   console.log(git('--git-dir',${JSON.stringify(remote)},'rev-parse','main'));
 }else if(args[1]==='list'){if(fs.existsSync(${JSON.stringify(pr)}))console.log('1');
-}else if(args[1]==='create'){fs.writeFileSync(${JSON.stringify(pr)},'open');
+}else if(args[1]==='create'){fs.copyFileSync(args[args.indexOf('--body-file')+1],${JSON.stringify(pr)});
 }else if(args[1]==='merge'){
   const head=args[args.indexOf('--match-head-commit')+1];
   const base=git('--git-dir',${JSON.stringify(remote)},'rev-parse','main');
@@ -162,7 +182,9 @@ if(args[0]==='api'){
   const published = JSON.parse(git('--git-dir', remote, 'show', 'main:data/mods.json'))
   assert.deepEqual(published.mods.map(mod => mod.repo), ['existing/repo', 'new/repo'])
   assert.match(git('--git-dir', remote, 'show', 'main:data/seeds.txt'), /later\/repo/)
-  assert.deepEqual(pendingSeeds(['existing/repo', 'new/repo', 'later/repo'], published), ['later/repo'])
+  assert.deepEqual(pendingSeeds(['existing/repo', 'new/repo', 'later/repo', 'broken/repo'], published), ['broken/repo', 'later/repo'])
+  assert.match(readFileSync(join(runner, 'seed-skipped.md'), 'utf8'), /^- broken\/repo: no validating mod plugins/)
+  if (!concurrentPublication) assert.match(readFileSync(pr, 'utf8'), /## Seeds not published\n\n- broken\/repo/)
   const commands = readFileSync(log, 'utf8').trim().split('\n').map(line => JSON.parse(line))
   assert.equal(commands.filter(command => command.join(' ') === 'npm run render').length, concurrentPublication ? 1 : 2)
   assert.equal(commands.filter(command => command[0] === 'gh' && command[2] === 'merge').length, concurrentPublication ? 0 : 1)
