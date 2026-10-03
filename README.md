@@ -1,18 +1,10 @@
-<h1>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/readme-title-dark.svg">
-    <img src="assets/readme-title-light.svg" alt="Awesome Claude Code Mods" width="620">
-  </picture>
-  <a href="https://awesome.re"><img src="https://awesome.re/badge.svg" alt="Awesome"></a>
-</h1>
+# Awesome Claude Code Mods [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
 
-> Discover Claude Code mods and see what each one can access.
+A community list of Claude Code mods (function hooks) for **Claude Code 2.1.287+**. A mod is a plugin that uses TypeScript functions to change Claude Code's interface or behavior. [Browse the catalogue](https://mods.aidojo.si/).
 
-Add a browser beside your conversation, keep usage in view, or check a command before it runs. Mods are plugins that change Claude Code's interface and behavior. Install a community mod or [ask Claude to build one](https://claude.dev/blog/getting-started-with-claude-code-mods/#the-shortcut-let-claude-build-it).
+Add a browser beside your conversation, keep usage in view, or check a command before it runs. Install a community mod or [ask Claude to build one](https://claude.dev/blog/getting-started-with-claude-code-mods/#the-shortcut-let-claude-build-it).
 
-This collection automatically discovers public mod repositories and shows what Claude's validator says each mod can read, write or run.
-
-[![Browse all mods](assets/browse-mods.svg)](https://mods.aidojo.si/)
+This community catalogue scans public GitHub repositories and records what Claude's validator reports each mod can read, write, run or send over the network. It is an independent scan, not an official Anthropic directory.
 
 <!-- stats:start -->
 **1017 mods** · Last scanned 2026-10-03.
