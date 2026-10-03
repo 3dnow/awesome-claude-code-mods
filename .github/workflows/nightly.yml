@@ -66,11 +66,30 @@ jobs:
             echo "mode=fast" >> "$GITHUB_OUTPUT"
             echo "args=--recent --skip-code-search" >> "$GITHUB_OUTPUT"
           fi
-      # PRs include submitted seeds without spending the global search rate limit.
-      - run: node tools/discover.mjs ${{ steps.mode.outputs.args }} --note "$RUNNER_TEMP/discovery.txt"
+      # Discovery progress waits in the open scan PR until it is merged; the cache hands it to the next run.
+      - name: Restore discovery progress from the last run
         if: github.event_name != 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/discovery
+          key: discovery-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: discovery-
+      # PRs include submitted seeds without spending the global search rate limit.
+      - name: Discover candidates
+        id: discover
+        if: github.event_name != 'pull_request'
+        run: node tools/discover.mjs ${{ steps.mode.outputs.args }} --restore "$RUNNER_TEMP/discovery/discovery.json" --note "$RUNNER_TEMP/discovery.txt"
         env:
           GH_TOKEN: ${{ github.token }}
+      - name: Stage discovery progress for the next run
+        if: steps.discover.outcome == 'success'
+        run: mkdir -p "$RUNNER_TEMP/discovery" && cp data/discovery.json "$RUNNER_TEMP/discovery/discovery.json"
+      - name: Save discovery progress for the next run
+        if: steps.discover.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/discovery
+          key: discovery-${{ github.run_id }}-${{ github.run_attempt }}
       - run: node tools/candidates.mjs --base "$PR_BASE"
         if: github.event_name == 'pull_request'
         env:

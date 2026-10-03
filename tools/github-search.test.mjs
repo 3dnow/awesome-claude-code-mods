@@ -31,9 +31,8 @@ test('gh adapter requests headers and retains them when gh exits nonzero', () =>
   ghSearchPage('topic:mods', 1, (binary, args) => {
     assert.ok(args.includes('search/repositories'))
     assert.ok(!args.includes('search/code'))
-    assert.ok(args.includes('sort=updated'))
     return 'HTTP/2.0 200 OK\n\n' + JSON.stringify(result)
-  }, { endpoint: 'search/repositories', sort: 'updated' })
+  }, { endpoint: 'search/repositories' })
   assert.throws(() => ghSearchPage('flag', 1, () => {
     throw Object.assign(new Error('gh failed'), { stdout: 'HTTP/2.0 429 Too Many Requests\nRetry-After: 190\n\n{"message":"slow down"}' })
   }), error => error.status === 429 && error.headers['retry-after'] === '190' && error.message === 'slow down')

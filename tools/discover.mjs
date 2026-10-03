@@ -6,9 +6,11 @@
 //
 //   node tools/discover.mjs                         # code search; fails without writing when it cannot finish
 //   node tools/discover.mjs --recent                # also repository search; reads and updates data/discovery.json
+//   node tools/discover.mjs --recent --restore <file>  # also merge progress saved by an earlier run
 //   node tools/discover.mjs --skip-code-search      # known candidates and seeds only
 //   node tools/discover.mjs --keep-on-failure       # a failed code search keeps the known candidates instead of failing
 //   node tools/discover.mjs --recent --check-limit 2000  # check more new repos than the default 200
+//   node tools/discover.mjs --recent --search-pause 0     # no pause between repository searches (default 3 seconds)
 //   node tools/discover.mjs --note <file>           # write what discovery did, for the scan pull request
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
@@ -16,7 +18,7 @@ import { execFileSync } from 'node:child_process'
 import { parseArgs } from 'node:util'
 import { readRepos, mergeRepos } from './candidates.mjs'
 import { createSearchRequest } from './github-search.mjs'
-import { findRecent, recentSince, readState, writeState, describeRecent } from './recent.mjs'
+import { findRecent, recentSince, readState, writeState, mergeState, describeRecent } from './recent.mjs'
 
 const QUERIES = [
   'CLAUDE_CODE_ENABLE_FUNCTION_HOOKS',
@@ -106,11 +108,15 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     'keep-on-failure': { type: 'boolean', default: false },
     recent: { type: 'boolean', default: false },
     since: { type: 'string' },
+    restore: { type: 'string' },
     'check-limit': { type: 'string', default: '200' },
+    'search-pause': { type: 'string', default: '3' },
     note: { type: 'string' },
   } })
   const limit = Number(args['check-limit'])
   if (!Number.isInteger(limit) || limit < 0) throw new Error(`--check-limit must be a whole number, got ${args['check-limit']}`)
+  const pause = Number(args['search-pause'])
+  if (!(pause >= 0)) throw new Error(`--search-pause must be a number of seconds, got ${args['search-pause']}`)
   const seeds = readRepos('data/seeds.txt')
   const previous = readRepos('data/repos.txt')
   const notes = []
@@ -128,12 +134,17 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     }
   }
   if (args.recent) {
-    const state = readState()
+    const state = args.restore ? mergeState(readState(), readState(args.restore)) : readState()
+    // Repos an earlier run found but main does not list yet stay candidates until a scan PR lands.
+    const onMain = new Set(mergeRepos(previous, seeds).map(repo => repo.toLowerCase()))
+    const carried = state.pending.filter(repo => !onMain.has(repo.toLowerCase()))
+    discovered.push(...carried)
     const since = args.since ?? recentSince(state.searchedThrough ?? lastScan())
-    const result = findRecent(since, mergeRepos(previous, seeds, discovered), { state, limit, budget: apiBudget(), advance: !args.since })
+    const result = findRecent(since, mergeRepos(previous, seeds, discovered), { state, limit, pause, budget: apiBudget(), advance: !args.since })
     discovered.push(...result.found)
-    writeState(result.state)
+    writeState({ ...result.state, pending: mergeRepos(carried, result.found) })
     notes.push(...describeRecent(since, result))
+    if (carried.length) notes.push(`Carried over from earlier runs: ${carried.join(', ')}.`)
   }
   mkdirSync('data', { recursive: true })
   const repos = mergeRepos(previous, seeds, discovered)

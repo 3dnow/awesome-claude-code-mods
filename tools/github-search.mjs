@@ -23,10 +23,10 @@ export function parseResponse(text) {
   return { ...response, body: JSON.parse(rest) }
 }
 
-export function ghSearchPage(q, page, exec = execFileSync, { endpoint = 'search/code', sort } = {}) {
+export function ghSearchPage(q, page, exec = execFileSync, { endpoint = 'search/code' } = {}) {
   let out, failure
   try {
-    out = exec('gh', ['api', '--include', '-X', 'GET', endpoint, '-f', `q=${q}`, '-f', 'per_page=100', '-f', `page=${page}`, ...(sort ? ['-f', `sort=${sort}`] : [])],
+    out = exec('gh', ['api', '--include', '-X', 'GET', endpoint, '-f', `q=${q}`, '-f', 'per_page=100', '-f', `page=${page}`],
       { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60000, maxBuffer: 16 * 1024 * 1024 })
   } catch (error) {
     failure = error

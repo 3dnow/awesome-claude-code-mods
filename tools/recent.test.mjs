@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { recentSince, searchRecent, hasHookModules, findRecent, describeRecent, RECENT_QUERIES } from './recent.mjs'
+import { recentSince, searchRecent, hasHookModules, findRecent, describeRecent, mergeState } from './recent.mjs'
 import { metaQuery, metaBatch, ghGraphql } from './meta.mjs'
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, chmodSync, rmSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
@@ -40,29 +40,68 @@ test('the search window starts an hour before the checkpoint and never reaches b
   assert.equal(recentSince(null, now), '2026-09-26T12:00:00Z')
 })
 
-test('repository search pages through every query, filters by push time and merges repos case-insensitively', () => {
+// A search API over a fixed set of repos that honours pushed:A..B and returns one page of 100.
+function timeline(items) {
   const asked = []
-  const pages = { 1: Array.from({ length: 100 }, (_, i) => repo(`owner/mod-${i}`)), 2: [repo('Owner/Mod-0'), repo('owner/extra', '2026-10-03T09:00:00Z', 'trunk')] }
-  const request = (query, page) => {
-    asked.push([query, page])
-    return query.startsWith('topic:claude-code-mod ') ? { total_count: 102, items: pages[page] } : { total_count: 1, items: [repo('OWNER/MOD-1')] }
+  const request = query => {
+    asked.push(query)
+    const [, lo, hi] = /pushed:(\S+)\.\.(\S+)$/.exec(query)
+    const hits = items.filter(i => Date.parse(i.pushed_at) >= Date.parse(lo) && Date.parse(i.pushed_at) <= Date.parse(hi))
+    return { total_count: hits.length, items: hits.slice(0, 100) }
   }
-  const found = searchRecent(since, request, quiet)
-  assert.ok(asked.every(([query]) => query.endsWith(` pushed:>=${since}`)))
-  assert.deepEqual(asked.filter(([query]) => query.startsWith('topic:claude-code-mod ')).map(([, page]) => page), [1, 2])
-  assert.equal(asked.length, RECENT_QUERIES.length + 1)
-  assert.equal(found.length, 101)
-  assert.deepEqual(found.at(-1), { repo: 'owner/extra', branch: 'trunk', pushedAt: '2026-10-03T09:00:00Z' })
+  return { request, asked }
+}
+const spread = (n, from, minutes) => Array.from({ length: n }, (_, i) => repo(`owner/mod-${i}`, new Date(Date.parse(from) + Math.floor(i * minutes * 60000 / n)).toISOString().replace(/\.\d{3}Z$/, 'Z')))
+
+test('a window with more than 1,000 matches is split by push time until every slice fits one page', () => {
+  const items = spread(1001, '2026-10-03T08:00:00Z', 240)
+  const { request, asked } = timeline(items)
+  const result = searchRecent(since, '2026-10-03T12:00:00Z', request, { queries: ['topic:claude-code-mod'], ...quiet })
+  assert.equal(result.repos.length, 1001)
+  assert.deepEqual(result.incomplete, [])
+  assert.ok(asked.length > 10)
+  assert.ok(asked.every(query => /^topic:claude-code-mod pushed:\S+Z\.\.\S+Z$/.test(query)))
 })
 
-test('repository search stops at the GitHub result cap and says so', () => {
-  const logs = []
-  let requests = 0
-  const request = (_, page) => { requests++; return { total_count: 5000, items: Array.from({ length: 100 }, (_, i) => repo(`o/r-${page}-${i}`)) } }
-  searchRecent(since, request, { queries: ['topic:claude-code-plugin'], log: line => logs.push(line) })
-  assert.equal(requests, 10)
-  assert.match(logs[0], /matched 5000 repositories; checking the 1000 pushed most recently/)
-  assert.throws(() => searchRecent('x', () => ({ total_count: 1, items: [{}] }), { queries: ['q'] }), /invalid search item/)
+test('every query runs, and repos are merged case-insensitively with their branch and push time', () => {
+  const { request, asked } = timeline([repo('Owner/Mod'), repo('owner/mod'), repo('owner/extra', '2026-10-03T09:00:00Z', 'trunk')])
+  const result = searchRecent(since, '2026-10-03T12:00:00Z', request, quiet)
+  assert.equal(asked.length, 7)
+  assert.ok(asked.every(query => query.endsWith(' pushed:2026-10-03T08:00:00Z..2026-10-03T12:00:00Z')))
+  assert.deepEqual(result.repos, [{ repo: 'Owner/Mod', branch: 'main', pushedAt: '2026-10-03T10:00:00Z' }, { repo: 'owner/extra', branch: 'trunk', pushedAt: '2026-10-03T09:00:00Z' }])
+})
+
+test('a slice that cannot be split or a short page leaves the search incomplete and the checkpoint in place', () => {
+  const crowded = Array.from({ length: 150 }, (_, i) => repo(`busy/repo-${i}`, '2026-10-03T09:00:00Z'))
+  const result = searchRecent(since, '2026-10-03T12:00:00Z', timeline(crowded).request, { queries: ['q'], ...quiet })
+  assert.equal(result.repos.length, 100)
+  assert.match(result.incomplete[0], /^q pushed:2026-10-03T09:00:00Z\.\.2026-10-03T09:00:00Z still matched 150 repositories$/)
+  const short = searchRecent(since, '2026-10-03T12:00:00Z', () => ({ total_count: 5, items: [repo('a/b')] }), { queries: ['q'], ...quiet })
+  assert.match(short.incomplete[0], /returned 1 of 5 repositories/)
+  assert.throws(() => searchRecent(since, '2026-10-03T12:00:00Z', () => ({ total_count: 1, items: [{}] }), { queries: ['q'] }), /invalid search item/)
+  const state = { searchedThrough: '2026-10-03T09:00:00Z', checked: {}, deferred: [], pending: [] }
+  const capped = findRecent(since, [], { state, request: timeline(crowded).request, api: () => ({ tree: [] }), startedAt: '2026-10-03T12:00:00Z', ...quiet })
+  assert.equal(capped.state.searchedThrough, '2026-10-03T09:00:00Z')
+  assert.match(describeRecent(since, capped)[0], /did not finish, so the checkpoint stays at 2026-10-03T09:00:00Z\. 7 time slices were incomplete/)
+})
+
+test('without a stored checkpoint, a failed search records the boundary it used', () => {
+  const failing = () => { throw new Error('repository search failed') }
+  const result = findRecent('2026-10-02T01:16:04Z', [], { request: failing, ...quiet })
+  assert.equal(result.state.searchedThrough, '2026-10-02T02:16:04Z')
+  assert.equal(recentSince(result.state.searchedThrough, now), '2026-10-02T01:16:04Z')
+})
+
+test('progress from the last run merges with main without losing work', () => {
+  const main = { searchedThrough: '2026-10-03T06:00:00Z', checked: { 'a/one': '2026-10-03T05:00:00Z' }, deferred: [{ repo: 'd/one' }], pending: ['p/one'] }
+  const cache = { searchedThrough: '2026-10-03T09:00:00Z', checked: { 'a/one': '2026-10-03T08:00:00Z', 'a/two': 'x' }, deferred: [{ repo: 'D/One' }, { repo: 'd/two' }], pending: ['P/One', 'p/two'] }
+  const merged = mergeState(main, cache)
+  assert.equal(merged.searchedThrough, '2026-10-03T09:00:00Z')
+  assert.deepEqual(merged.checked, { 'a/one': '2026-10-03T08:00:00Z', 'a/two': 'x' })
+  assert.deepEqual(merged.deferred.map(c => c.repo), ['D/One', 'd/two'])
+  assert.deepEqual(merged.pending, ['P/One', 'p/two'])
+  assert.equal(mergeState({ ...main, searchedThrough: null }, cache).searchedThrough, '2026-10-03T09:00:00Z')
+  assert.equal(mergeState(main, { ...cache, searchedThrough: null }).searchedThrough, '2026-10-03T06:00:00Z')
 })
 
 test('only a hooks.json in a hooks folder that lists modules makes a candidate, at one API call per repo', () => {
@@ -83,7 +122,7 @@ test('only a hooks.json in a hooks folder that lists modules makes a candidate, 
 
 test('a search that does not finish keeps the checkpoint, and known repos are never checked', () => {
   const { api, raw, calls } = fakeGitHub({ 'new/mod': { 'hooks/hooks.json': { modules: ['m'] } } })
-  const state = { searchedThrough: '2026-10-03T07:00:00Z', checked: {}, deferred: [{ repo: 'new/mod', branch: 'main', pushedAt: '2026-10-03T06:00:00Z' }] }
+  const state = { searchedThrough: '2026-10-03T07:00:00Z', checked: {}, deferred: [{ repo: 'new/mod', branch: 'main', pushedAt: '2026-10-03T06:00:00Z' }], pending: [] }
   const request = () => { throw new Error('repository search failed for topic:claude-code-mod: retry attempts exhausted') }
   const result = findRecent(since, ['known/mod'], { state, request, api, raw, startedAt: '2026-10-03T12:00:00Z', ...quiet })
   assert.equal(result.state.searchedThrough, '2026-10-03T07:00:00Z')
@@ -166,7 +205,7 @@ test('scan metadata comes in GraphQL batches and missing repos fall back', () =>
   assert.deepEqual(ghGraphql('q', () => { throw Object.assign(new Error('gh exit 1'), { stdout: '{"data":{"r0":null},"errors":[{"type":"NOT_FOUND"}]}' }) }), { r0: null })
 })
 
-function cli(t, gh, args, { state } = {}) {
+function cli(t, gh, args, { state, restore, env = {} } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'discovery-cli-'))
   t.after(() => rmSync(root, { recursive: true, force: true }))
   mkdirSync(join(root, 'data'))
@@ -175,11 +214,12 @@ function cli(t, gh, args, { state } = {}) {
   writeFileSync(join(root, 'data/seeds.txt'), 'seeded/mod\n')
   writeFileSync(join(root, 'data/mods.json'), JSON.stringify({ generated: new Date(Date.now() - 2 * HOUR).toISOString(), mods: [] }))
   if (state) writeFileSync(join(root, 'data/discovery.json'), JSON.stringify(state))
+  if (restore) { writeFileSync(join(root, 'restored.json'), restore); args = [...args, '--restore', join(root, 'restored.json')] }
   const binary = (name, code) => { writeFileSync(join(root, 'bin', name), '#!' + process.execPath + '\n' + code); chmodSync(join(root, 'bin', name), 0o755) }
   binary('gh', gh)
   binary('curl', `const url = process.argv.at(-1); if (url.includes('/fresh/mod/')) console.log('{"modules":["./m.ts"]}'); else process.exit(22)`)
   const run = spawnSync(process.execPath, [fileURLToPath(new URL('./discover.mjs', import.meta.url)), ...args, '--note', join(root, 'note.txt')], {
-    cwd: root, env: { ...process.env, PATH: join(root, 'bin') + ':' + process.env.PATH, GH_LOG: join(root, 'gh.log') }, encoding: 'utf8', timeout: 60000,
+    cwd: root, env: { ...process.env, PATH: join(root, 'bin') + ':' + process.env.PATH, GH_LOG: join(root, 'gh.log'), ...env }, encoding: 'utf8', timeout: 60000,
   })
   const read = name => { try { return readFileSync(join(root, name), 'utf8') } catch { return '' } }
   return { run, repos: read('data/repos.txt'), note: read('note.txt'), gh: read('gh.log'), state: read('data/discovery.json') }
@@ -197,39 +237,59 @@ test('a rate-limited code search keeps known candidates and seeds when asked to'
   assert.match(note, /^Code search did not finish, so discovery kept the known candidates and seeds\. code search failed/)
 })
 
-test('a fast refresh skips code search, adds recent repos with hook modules and saves its progress', t => {
-  const gh = `
+const searchGh = `
 const fs = require('node:fs'), args = process.argv.slice(2)
 fs.appendFileSync(process.env.GH_LOG, args.join(' ') + '\\n')
 const json = value => console.log(JSON.stringify(value))
+const items = JSON.parse(process.env.SEARCH_ITEMS)
 if (args.includes('search/code')) { console.log('HTTP/2.0 500 Internal\\n\\n{"message":"code search must not run"}'); process.exit(1) }
 if (args.includes('rate_limit')) console.log(5000)
-else if (args.includes('search/repositories')) {
-  console.log('HTTP/2.0 200 OK\\n\\n' + JSON.stringify({ total_count: 3, incomplete_results: false, items: [
-    { full_name: 'fresh/mod', default_branch: 'main', pushed_at: '2026-10-03T09:00:00Z' },
-    { full_name: 'fresh/plugin', default_branch: 'main', pushed_at: '2026-10-03T09:30:00Z' },
-    { full_name: 'Existing/Mod', default_branch: 'main', pushed_at: '2026-10-03T09:00:00Z' } ] }))
-} else if (args[1].startsWith('repos/fresh/mod/git/trees/')) json({ truncated: false, tree: [{ type: 'blob', path: 'hooks/hooks.json' }] })
+else if (args.includes('search/repositories')) console.log('HTTP/2.0 200 OK\\n\\n' + JSON.stringify({ total_count: items.length, incomplete_results: false, items }))
+else if (args[1].startsWith('repos/fresh/mod/git/trees/')) json({ truncated: false, tree: [{ type: 'blob', path: 'hooks/hooks.json' }] })
 else if (args[1].startsWith('repos/fresh/plugin/git/trees/')) json({ truncated: false, tree: [{ type: 'blob', path: 'README.md' }] })
 else process.exit(1)
 `
-  const state = { searchedThrough: '2026-10-03T09:00:00Z', checked: {}, deferred: [] }
+const freshItems = [
+  { full_name: 'fresh/mod', default_branch: 'main', pushed_at: '2026-10-03T09:00:00Z' },
+  { full_name: 'fresh/plugin', default_branch: 'main', pushed_at: '2026-10-03T09:30:00Z' },
+  { full_name: 'Existing/Mod', default_branch: 'main', pushed_at: '2026-10-03T09:00:00Z' },
+]
+
+test('a fast refresh skips code search, adds recent repos with hook modules and saves its progress', t => {
+  const state = { searchedThrough: '2026-10-03T09:00:00Z', checked: {}, deferred: [], pending: [] }
   const before = Date.now()
-  const { run, repos, note, gh: log, state: saved } = cli(t, gh, ['--skip-code-search', '--recent'], { state })
+  const { run, repos, note, gh: log, state: saved } = cli(t, searchGh, ['--skip-code-search', '--recent', '--search-pause', '0'], { state, env: { SEARCH_ITEMS: JSON.stringify(freshItems) } })
   assert.equal(run.status, 0, run.stderr)
   assert.equal(repos, 'existing/mod\nfresh/mod\nseeded/mod\n')
   assert.ok(!log.includes('search/code'))
-  assert.ok(log.includes('sort=updated'))
-  assert.ok(log.includes('q=topic:claude-code-mod pushed:>=2026-10-03T08:00:00Z'))
+  assert.match(log, /q=topic:claude-code-mod pushed:2026-10-03T08:00:00Z\.\.\S+Z /)
   assert.match(note, /^Code search was skipped; this run covers known candidates and seeds\.\nRepository search since 2026-10-03T08:00:00Z matched 3 repositories; 2 needed a check, 2 were checked, 0 wait for the next run and 0 failed\.\nAdded fresh\/mod\.\n$/)
   const progress = JSON.parse(saved)
   assert.ok(Date.parse(progress.searchedThrough) >= before - 1000)
   assert.deepEqual(progress.checked, { 'fresh/plugin': '2026-10-03T09:30:00Z' })
   assert.deepEqual(progress.deferred, [])
+  assert.deepEqual(progress.pending, ['fresh/mod'])
+})
+
+test('two fresh checkouts with no merge between them continue from the restored progress', t => {
+  const env = { SEARCH_ITEMS: JSON.stringify(freshItems.slice(0, 2).reverse()) }
+  const first = cli(t, searchGh, ['--skip-code-search', '--recent', '--search-pause', '0', '--check-limit', '1'], { env })
+  assert.equal(first.run.status, 0, first.run.stderr)
+  assert.deepEqual(JSON.parse(first.state).deferred.map(c => c.repo), ['fresh/mod'])
+
+  const second = cli(t, searchGh, ['--skip-code-search', '--recent', '--search-pause', '0', '--check-limit', '1'], { env, restore: first.state })
+  assert.equal(second.run.status, 0, second.run.stderr)
+  assert.equal(second.repos, 'existing/mod\nfresh/mod\nseeded/mod\n')
+  assert.ok(!second.gh.includes('repos/fresh/plugin/git/trees'))
+
+  const third = cli(t, searchGh, ['--skip-code-search', '--recent', '--search-pause', '0'], { env: { SEARCH_ITEMS: '[]' }, restore: second.state })
+  assert.equal(third.run.status, 0, third.run.stderr)
+  assert.equal(third.repos, 'existing/mod\nfresh/mod\nseeded/mod\n')
+  assert.match(third.note, /Carried over from earlier runs: fresh\/mod\./)
 })
 
 test('a failed repository search still writes the known candidates and keeps the checkpoint', t => {
-  const state = { searchedThrough: '2026-10-03T09:00:00Z', checked: {}, deferred: [] }
+  const state = { searchedThrough: '2026-10-03T09:00:00Z', checked: {}, deferred: [], pending: [] }
   const { run, repos, note, state: saved } = cli(t, limitedGh, ['--skip-code-search', '--recent'], { state })
   assert.equal(run.status, 0, run.stderr)
   assert.equal(repos, 'existing/mod\nseeded/mod\n')
