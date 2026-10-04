@@ -11,13 +11,16 @@ A daily scan searches GitHub code for repositories that mention `CLAUDE_CODE_ENA
 1. Add your `owner/repo` to `data/seeds.txt`, one per line.
    If you moved a mod to a new repo and the table lists both, add the pair to `data/duplicates.txt` so the old copy stops counting.
    A repo that repackages other authors' mods as a catalogue goes in `data/catalogs.txt`: it is named once with its count rather than listed per copy.
+   If the scan files an installable mod as test material only because of its folder name (such as `bench` or `probe`), add its id to `data/fixture-exceptions.txt`.
+
+   Each distinct installable mod counts once, however many mods its repository holds. Sharing a repository or helper code does not make mods duplicates; only a confirmed copy or a renamed repository goes in `data/duplicates.txt`.
 2. If you want a curated entry (not only a row in the generated table), add one line under the matching section of `README.md` in this exact shape:
 
    `- [name](https://github.com/owner/repo) - What it does, one sentence, ending with a period.`
 
 3. Run `npm test` and `npm run lint`. Both must pass.
 
-PR checks scan newly added seeds. A new seed must clone successfully and contain mod plugins that validate; warnings are allowed. A pull request that changes `tools/`, the package files or the workflows rescans every committed candidate alongside the seeds, so tooling changes are checked against the whole collection. Global search runs in scheduled scans, not in PR checks.
+PR checks scan newly added seeds. A new seed must clone successfully and contain mod plugins that validate; warnings are allowed. A pull request that changes `tools/`, the package files, the workflows or one of the classification lists (`data/duplicates.txt`, `data/catalogs.txt`, `data/fixture-exceptions.txt`) rescans every committed candidate alongside the seeds, so tooling and classification changes are checked against the whole collection. Global search runs in scheduled scans, not in PR checks.
 
 After a seed PR is merged, the `publish approved seeds` workflow scans approved repositories that have no published inventory entries. It adds all their mod entries, regenerates the catalogue and website, checks the result, then opens and squash-merges a dedicated publication PR automatically. It requests a GitHub Pages build explicitly. No second maintainer merge is needed for successful additions. A repository already represented in the inventory follows the normal refresh workflow.
 
