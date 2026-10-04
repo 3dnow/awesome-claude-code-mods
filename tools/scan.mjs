@@ -13,7 +13,7 @@ import { validate } from './validate.mjs'
 import { uiRewriteReview, marketplacesFor } from './compatibility.mjs'
 import { grade, visibility, drawsOn } from './grade.mjs'
 import { readDuplicates, applyDuplicates, suspectDuplicates } from './dedupe.mjs'
-import { kindOf, readCatalogs } from './kind.mjs'
+import { kindOf, readCatalogs, readFixtureExceptions } from './kind.mjs'
 import { parseArgs } from 'node:util'
 import { readRepos, mergeRepos } from './candidates.mjs'
 import { reconcile, checkRequired } from './inventory.mjs'
@@ -36,6 +36,7 @@ const previous = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')).mods : 
 if (!Array.isArray(previous)) throw new Error(`invalid previous inventory: ${OUT}`)
 const checkedRepos = new Map()
 const catalogs = readCatalogs()
+const fixtureExceptions = readFixtureExceptions()
 mkdirSync(CLONES, { recursive: true })
 
 function clone(repo) {
@@ -120,7 +121,7 @@ for (const repo of repos) {
       author: manifest?.author?.name ?? null,
       homepage: manifest?.homepage ?? `https://github.com/${repo}`,
       url: rel === '.' ? `https://github.com/${repo}` : `https://github.com/${repo}/tree/${m.defaultBranch ?? 'main'}/${rel}`,
-      kind: kindOf(repo, rel, manifest, catalogs),
+      kind: kindOf(repo, rel, manifest, catalogs, fixtureExceptions),
       hasManifest: existsSync(manifestPath),
       modules: hooks.modules,
       hooks: allHooks,

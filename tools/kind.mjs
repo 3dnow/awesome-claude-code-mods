@@ -7,14 +7,16 @@ import { readFileSync } from 'node:fs'
 
 const NOT_A_MOD = [/\/tests?\//, /\/fixtures?\//, /\/probes?\//, /\/examples?\//, /\/upstreams?\//, /\/docs?\//, /\/templates?\//, /\/canary\//, /\/bench(?:marks?)?\//, /\/stubs?\//]
 
-export function readCatalogs(path = 'data/catalogs.txt') {
+const readList = path => {
   let text; try { text = readFileSync(path, 'utf8') } catch { return new Set() }
   return new Set(text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')))
 }
+export const readCatalogs = (path = 'data/catalogs.txt') => readList(path)
+export const readFixtureExceptions = (path = 'data/fixture-exceptions.txt') => readList(path)
 
-export function kindOf(repo, rel, manifest, catalogs = new Set()) {
+export function kindOf(repo, rel, manifest, catalogs = new Set(), exceptions = new Set()) {
   if (repo === 'anthropics/claude-code') return 'builtin'
-  if (NOT_A_MOD.some(re => re.test('/' + rel + '/'))) return 'fixture'
+  if (!exceptions.has(`${repo}:${rel}`) && NOT_A_MOD.some(re => re.test('/' + rel + '/'))) return 'fixture'
   if (/not a product mod|not a (?:plugin|mod) to install|not an? installable plugin|measurement instrument|test fixture/i.test(manifest?.description ?? '')) return 'fixture'
   if (catalogs.has(repo)) return 'catalog'
   if (/\/mods\/(diff|sec-default|telemetry)$/.test('/' + rel) || ['diff', 'sec-default', 'telemetry'].includes(manifest?.name) && rel.includes('mods/')) return 'mirror'
