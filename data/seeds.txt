@@ -28,3 +28,4 @@ reporails/arcade
 njp-coder/meanwhile
 ruihe774/cc-micro-compaction
 ugglr/claude-token-monster
+ben-rogerson/claude-counter-strike
