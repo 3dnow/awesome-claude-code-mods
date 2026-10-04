@@ -1,5 +1,6 @@
 # Repos the GitHub code search has not indexed yet. One owner/repo per line.
 halluton/Mindful-Claude
+danzerzine/claude-council
 anthropics/claude-code
 karanb192/claude-code-mods
 karanb192/cache-tax
