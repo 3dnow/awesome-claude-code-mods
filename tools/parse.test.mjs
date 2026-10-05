@@ -66,7 +66,7 @@ test('visibility names what a hook can observe', () => {
 })
 
 import { fingerprint, describeChange, looksPartial } from './changed.mjs'
-import { applyDuplicates, suspectDuplicates, readDuplicates } from './dedupe.mjs'
+import { applyDuplicates, suspectDuplicates, readDuplicates, renamePairs } from './dedupe.mjs'
 import { kindOf, readCatalogs } from './kind.mjs'
 
 const base = { claudeVersion: '2.1.272', mods: [
@@ -111,6 +111,22 @@ test('a listed duplicate collapses onto its successor; an unlisted same-owner sa
   assert.deepEqual(listed[0], ['galElmalah/claude-queue-plugin:.', 'galElmalah/claude-mods:claude-queue'])
   for (const pair of listed) assert.ok(pair.length === 2 && pair.every(id => /^[\w.-]+\/[\w.-]+:\S+$/.test(id)) && pair[0] !== pair[1], pair.join(' '))
   assert.deepEqual([...readDuplicates('data/no-such-file.txt')], [])
+})
+
+test('a repository GitHub reports under a new name collapses onto that name', () => {
+  const mods = [
+    { id: 'o/old-name:plugins/a', repo: 'o/old-name', path: 'plugins/a', kind: 'mod' },
+    { id: 'o/old-name:plugins/b', repo: 'o/old-name', path: 'plugins/b', kind: 'mod' },
+    { id: 'O/New-Name:plugins/a', repo: 'O/New-Name', path: 'plugins/a', kind: 'mod' },
+    { id: 'o/mono:x', repo: 'o/mono', path: 'x', kind: 'mod' },
+    { id: 'o/standalone:.', repo: 'o/standalone', path: '.', kind: 'mod' },
+  ]
+  const currentName = new Map([['o/old-name', 'o/new-name'], ['o/new-name', 'O/New-Name'], ['o/mono', 'o/mono'], ['o/standalone', 'o/standalone']])
+  const pairs = renamePairs(mods, currentName)
+  assert.deepEqual([...pairs], [['o/old-name:plugins/a', 'O/New-Name:plugins/a']], 'only a plugin whose new-name copy was scanned, matched without regard to case')
+  const applied = applyDuplicates(structuredClone(mods), pairs)
+  assert.deepEqual(applied.filter(m => m.kind === 'mod').map(m => m.id), ['o/old-name:plugins/b', 'O/New-Name:plugins/a', 'o/mono:x', 'o/standalone:.'])
+  assert.equal(renamePairs(mods, new Map()).size, 0, 'no metadata, no collapse')
 })
 
 test('the change list names a collapse and a suspected pair', () => {

@@ -1,7 +1,8 @@
 // A mod its author has moved or copied to another repo shows up twice in a scan. The pairs
 // that are one mod are recorded by hand in data/duplicates.txt; the scanner applies that
-// list and flags same-owner same-name candidates for review, but never collapses on its own,
-// because owner plus manifest name is not a durable identity and a wrong match hides a mod.
+// list and flags same-owner same-name candidates for review. It collapses on its own only a
+// repository GitHub reports under a new name, because owner plus manifest name is not a
+// durable identity and a wrong match hides a mod.
 
 import { readFileSync } from 'node:fs'
 
@@ -31,4 +32,19 @@ export function suspectDuplicates(mods) {
     groups.set(key, [...(groups.get(key) ?? []), m.id])
   }
   return [...groups.values()].filter(g => g.length > 1).map(g => g.sort())
+}
+
+// A renamed repository still clones under its old name, so a scan that lists both names finds
+// every plugin twice. Pairs each plugin under the old name with the same path under the name
+// GitHub now reports, when that copy was scanned too.
+export function renamePairs(mods, currentName) {
+  const byId = new Map(mods.map(m => [m.id.toLowerCase(), m]))
+  const pairs = new Map()
+  for (const m of mods) {
+    const now = currentName.get(m.repo.toLowerCase())
+    if (!now || now.toLowerCase() === m.repo.toLowerCase()) continue
+    const keeper = byId.get(`${now}:${m.path}`.toLowerCase())
+    if (keeper && keeper !== m) pairs.set(m.id, keeper.id)
+  }
+  return pairs
 }
