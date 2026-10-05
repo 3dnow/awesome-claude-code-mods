@@ -43,3 +43,5 @@ wellbrained/usage-meter-mod:. wellbrained/status-deck:.
 JetsonChan/claude-code-mods:usage-band JetsonChan/CC-Usage-Band:usage-band
 0xGondarxyz/usage-meter:. 0xGondarxyz/claude-code-mods:usage-meter
 liawzishen/git-diff-timeline:. liawzishen/claude-code-mods:git-diff-timeline
+griches/claude-xcode-mod:. griches/xcpane:.
+roy651/cc-bearings:plugins/bearings roy651/cc-plugins:plugins/bearings

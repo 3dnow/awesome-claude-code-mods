@@ -52,14 +52,15 @@ export function appendSeeds(before, scanned, seeds, candidates, duplicates = new
   for (;;) {
     const acceptedKeys = new Set(accepted.map(key))
     const added = scanned.mods.filter(mod => acceptedKeys.has(key(mod.repo)))
+    const addedIds = new Set(added.map(mod => mod.id))
     const mods = structuredClone([...before.mods, ...added])
-    applyDuplicates(mods, duplicates)
+    // Rules between published entries belong to the reviewed full-scan path.
+    applyDuplicates(mods, new Map([...duplicates].filter(([copy, keeper]) => addedIds.has(copy) || addedIds.has(keeper))))
     const repoOf = id => mods.find(mod => mod.id === id)?.repo
     const drop = new Map()
     before.mods.forEach((mod, i) => {
       if (JSON.stringify(mods[i]) !== JSON.stringify(mod)) drop.set(repoOf(mods[i].duplicateOf), `reclassifies ${mod.id} as a duplicate; manual review required`)
     })
-    const addedIds = new Set(added.map(mod => mod.id))
     for (const pair of suspectDuplicates(mods)) {
       for (const id of pair) if (addedIds.has(id)) drop.set(repoOf(id), `possible duplicate: ${pair.join(' and ')} share an owner and a name`)
     }

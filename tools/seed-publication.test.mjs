@@ -158,6 +158,46 @@ test('a new seed cannot silently reclassify an existing mod as a duplicate', () 
   assert.deepEqual(result.inventory.mods[0], before().mods[0])
 })
 
+test('unapplied duplicate rules between published entries do not block new seeds', () => {
+  const prior = inventory([mod('same/old'), mod('same/current')])
+  const original = structuredClone(prior)
+  const duplicates = new Map([['same/old:mod', 'same/current:mod']])
+  const result = append(scan(), prior, duplicates)
+  assert.deepEqual(result.published, ['new/repo'])
+  assert.deepEqual(result.skipped, [])
+  assert.deepEqual(result.inventory.mods, [...original.mods, ...scan().mods])
+  assert.equal(result.inventory.generated, original.generated)
+  assert.deepEqual(prior, original)
+})
+
+test('pending old duplicate rules cannot hide suspicions involving a new seed', () => {
+  const prior = inventory([mod('same/old'), mod('same/current', 'renamed')])
+  const duplicates = new Map([['same/old:mod', 'same/current:renamed']])
+  const result = appendSeeds(prior, inventory([mod('same/new'), ...scan().mods]), ['same/new', 'new/repo'], [], duplicates)
+  assert.deepEqual(result.published, ['new/repo'])
+  assert.equal(result.skipped.length, 1)
+  assert.equal(result.skipped[0].repo, 'same/new')
+  assert.match(result.skipped[0].reason, /possible duplicate/)
+  assert.deepEqual(result.inventory.mods.slice(0, 2), prior.mods)
+})
+
+test('new duplicate rules still apply while old inventory classifications are preserved', () => {
+  const prior = inventory([mod('same/old'), mod('same/current')])
+  const duplicates = new Map([
+    ['same/old:mod', 'same/current:mod'],
+    ['same/new:mod', 'same/old:mod'],
+    ['same/current:mod', 'same/replacement:next'],
+  ])
+  const result = appendSeeds(prior, inventory([mod('same/new'), mod('same/replacement', 'next'), ...scan().mods]), ['same/new', 'same/replacement', 'new/repo'], [], duplicates)
+  assert.deepEqual(result.published, ['new/repo', 'same/new'])
+  assert.equal(result.skipped.length, 1)
+  assert.equal(result.skipped[0].repo, 'same/replacement')
+  assert.match(result.skipped[0].reason, /reclassifies same\/current:mod/)
+  assert.deepEqual(result.inventory.mods.slice(0, 2), prior.mods)
+  assert.equal(result.inventory.mods.find(m => m.repo === 'same/new').kind, 'duplicate')
+  assert.equal(result.inventory.mods.find(m => m.repo === 'same/new').duplicateOf, 'same/old:mod')
+})
+
 test('a contributor merge during a scan does not discard that scan or publish unscanned seeds', () => {
   const latest = before()
   const approved = ['new/repo', 'later/repo']
@@ -195,7 +235,9 @@ for (const concurrentPublication of [false, true]) test(`publication handles a c
   cpSync(fileURLToPath(new URL('.', import.meta.url)), join(checkout, 'tools'), { recursive: true })
   mkdirSync(join(checkout, 'data'))
   const renderable = (repo, name) => ({ ...mod(repo, name), path: name, description: name, url: `https://github.com/${repo}`, stars: 1, reach: { level: 0, labels: [] }, sees: [], hooks: [], calls: [], surfaceModules: [] })
-  writeFileSync(join(checkout, 'data/mods.json'), JSON.stringify(inventory([renderable('existing/repo', 'old')])))
+  const publishedBefore = [renderable('existing/repo', 'old'), renderable('existing/repo', 'copy')]
+  writeFileSync(join(checkout, 'data/mods.json'), JSON.stringify(inventory(publishedBefore)))
+  writeFileSync(join(checkout, 'data/duplicates.txt'), 'existing/repo:copy existing/repo:old\n')
   writeFileSync(join(checkout, 'data/repos.txt'), 'existing/repo\n')
   writeFileSync(join(checkout, 'data/seeds.txt'), 'existing/repo\nnew/repo\nbroken/repo\n')
   writeFileSync(join(checkout, 'README.md'), '<!-- stats:start -->\n<!-- stats:end -->\n')
@@ -241,7 +283,8 @@ if(args[0]==='api'){
 `, { mode: 0o755 })
   execFileSync('bash', ['tools/publish-seeds.sh'], { cwd: checkout, env: { ...env, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: runner, GITHUB_REPOSITORY: 'example/mods', GITHUB_RUN_ID: '1' }, stdio: 'pipe' })
   const published = JSON.parse(git('--git-dir', remote, 'show', 'main:data/mods.json'))
-  assert.deepEqual(published.mods.map(mod => mod.repo), ['existing/repo', 'new/repo'])
+  assert.deepEqual(published.mods.slice(0, 2), publishedBefore)
+  assert.deepEqual(published.mods.map(mod => mod.repo), ['existing/repo', 'existing/repo', 'new/repo'])
   assert.match(git('--git-dir', remote, 'show', 'main:data/seeds.txt'), /later\/repo/)
   assert.deepEqual(pendingSeeds(['existing/repo', 'new/repo', 'later/repo', 'broken/repo'], published), ['broken/repo', 'later/repo'])
   assert.match(readFileSync(join(runner, 'seed-skipped.md'), 'utf8'), /^- broken\/repo: no validating mod plugins/)
