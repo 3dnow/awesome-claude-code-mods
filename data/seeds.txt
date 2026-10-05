@@ -31,6 +31,7 @@ reporails/arcade
 njp-coder/meanwhile
 apolenkov/agent-shell-watch
 apolenkov/agent-council
+apolenkov/agent-compact-advisor
 ruihe774/cc-micro-compaction
 ugglr/claude-token-monster
 ben-rogerson/claude-counter-strike
