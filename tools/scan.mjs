@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os'
 import { validate } from './validate.mjs'
 import { uiRewriteReview, marketplacesFor } from './compatibility.mjs'
 import { grade, visibility, drawsOn } from './grade.mjs'
-import { readDuplicates, applyDuplicates, suspectDuplicates, renamePairs } from './dedupe.mjs'
+import { readDuplicates, applyDuplicatesWithRenames, suspectDuplicates, renamePairs } from './dedupe.mjs'
 import { kindOf, readCatalogs, readFixtureExceptions } from './kind.mjs'
 import { parseArgs } from 'node:util'
 import { readRepos, mergeRepos } from './candidates.mjs'
@@ -148,6 +148,7 @@ for (const repo of repos) {
 }
 
 if (args.required) checkRequired(readRepos(args.required), mods, checkedRepos)
+const freshIds = new Set(mods.map(mod => mod.id))
 const inventory = reconcile(previous, mods, checkedRepos, args.retire)
 mods = inventory.mods
 if (args.retire) {
@@ -160,9 +161,8 @@ if (args.retire) {
     repos: removed.map(repo => ({ repo, revision: checkedRepos.get(repo.toLowerCase()), reason: 'no hook modules in a fresh checkout' })),
   }, null, 2) + '\n')
 }
-applyDuplicates(mods, readDuplicates())
-const renames = renamePairs(mods, currentName)
-applyDuplicates(mods, renames)
+const renames = renamePairs(mods, currentName, freshIds)
+applyDuplicatesWithRenames(mods, readDuplicates(), renames)
 for (const [old, current] of renames) console.log(`renamed  ${old} is ${current}`)
 for (const pair of suspectDuplicates(mods)) console.log(`possible duplicate: ${pair.join(' and ')} share an owner and a name; if they are one mod, add the pair to data/duplicates.txt`)
 mods.sort((a, b) => (b.stars ?? -1) - (a.stars ?? -1) || a.id.localeCompare(b.id))
